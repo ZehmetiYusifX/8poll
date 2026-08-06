@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/*
+ * 8poll dizayn sistemi — klassik bilyard klubu:
+ * isti krem/kağız fon, dərin mahud yaşılı, qoz ağacı (wood) vurğular, serif başlıqlar.
+ */
+@theme {
+  /* Bilyard mahud yaşılı */
+  --color-felt-50: #eef5f0;
+  --color-felt-100: #d8e9de;
+  --color-felt-200: #b2d3bf;
+  --color-felt-300: #83b799;
+  --color-felt-400: #559874;
+  --color-felt-500: #2f7d54;
+  --color-felt-600: #206043;
+  --color-felt-700: #1b4d38;
+  --color-felt-800: #163d2d;
+  --color-felt-900: #123125;
+
+  /* Qoz ağacı / rail (haşiyə) tonları */
+  --color-wood-100: #efe3d3;
+  --color-wood-200: #e0cbb0;
+  --color-wood-400: #b58a5f;
+  --color-wood-600: #855c37;
+  --color-wood-700: #6b4a2c;
+
+  /* Mətn (tünd mürəkkəb) */
+  --color-ink-900: #20281f;
+  --color-ink-700: #3c463a;
+  --color-ink-500: #6a7267;
+  --color-ink-400: #8a9186;
+
+  /* Səthlər */
+  --color-paper: #f4efe4;
+  --color-card: #fbf8f1;
+  --color-cream: #faf7ef;
+
+  --font-display: Georgia, "Times New Roman", "Playfair Display", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-paper);
+  /* çox incə vinyet — kağız/mahud hissi, parıltısız */
+  background-image:
+    radial-gradient(120% 120% at 50% -10%, #ffffff 0%, transparent 40%),
+    radial-gradient(140% 100% at 50% 120%, #e9e2d3 0%, transparent 45%);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #d8cfbd; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #c4b8a1; }
