@@ -32,7 +32,7 @@ import {
   IconX,
 } from '../components/icons'
 import { useToast } from '../components/Toast'
-import { extractErrorMessage } from '../api/client'
+import { extractErrorMessage, mediaUrl } from '../api/client'
 import type { Venue, Tournament } from '../api/types'
 
 export function VenueProfile() {
@@ -362,7 +362,7 @@ function Lightbox({
       </button>
 
       <img
-        src={photos[index]}
+        src={mediaUrl(photos[index])}
         alt={`${name} — ${index + 1}`}
         className="max-h-[80dvh] max-w-full rounded-lg object-contain shadow-2xl"
         onClick={(e) => e.stopPropagation()}

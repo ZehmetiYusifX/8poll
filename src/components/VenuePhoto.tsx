@@ -1,3 +1,4 @@
+import { mediaUrl } from '../api/client'
 import { IconEightBall } from './icons'
 import { cx } from './ui'
 
@@ -16,10 +17,12 @@ export function VenuePhoto({
   className?: string
   rounded?: string
 }) {
-  if (src) {
+  const resolved = mediaUrl(src)
+
+  if (resolved) {
     return (
       <img
-        src={src}
+        src={resolved}
         alt={alt}
         loading="lazy"
         decoding="async"

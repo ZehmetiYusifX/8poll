@@ -12,9 +12,21 @@ export function setToken(token: string | null) {
 }
 
 // VITE_API_URL verilmese, Vite proxy vasitesile /api istifade olunur
-const baseURL = import.meta.env.VITE_API_URL ?? '/api'
+// ?? yox, || - bos setir de ("VITE_API_URL=" kimi) fallback-e dusmelidir
+const baseURL = import.meta.env.VITE_API_URL || '/api'
 
 export const api = axios.create({ baseURL })
+
+// Backend-in kok unvani: "https://host/api" -> "https://host".
+// Dev-de (baseURL = "/api") bos qalir, cunki Vite proxy /uploads-u ozu yonlendirir.
+const mediaOrigin = /^https?:\/\//.test(baseURL) ? baseURL.replace(/\/api\/?$/, '') : ''
+
+/** Backend-den gelen nisbi fayl yolunu (/uploads/...) tam URL-e cevirir */
+export function mediaUrl(path?: string | null): string | undefined {
+  if (!path) return undefined
+  if (/^https?:\/\//.test(path)) return path
+  return mediaOrigin + path
+}
 
 // Her sorguya JWT elave et
 api.interceptors.request.use((config) => {
