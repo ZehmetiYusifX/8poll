@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { VenueApi } from '../api'
-import { Card, Input, PageLoader, Empty, Button } from '../components/ui'
+import { VenuePhoto } from '../components/VenuePhoto'
+import { Alert, Button, Card, Empty, Input, PageHeader, Skeleton } from '../components/ui'
+import { IconBuilding, IconPin, IconPlus, IconSearch } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import type { Venue } from '../api/types'
 
@@ -26,43 +28,79 @@ export function Venues() {
     )
   }, [venues, query])
 
-  if (loading) return <PageLoader />
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-ink-900">Məkanlar</h1>
-          <p className="text-sm text-ink-500">Bilyard klubları və turnir məkanları</p>
-        </div>
-        <Link to="/venues/register">
-          <Button variant="secondary">Məkan əlavə et</Button>
-        </Link>
+    <div>
+      <PageHeader
+        title="Məkanlar"
+        subtitle="Bilyard klubları və turnir məkanları"
+        actions={
+          <Link to="/venues/register">
+            <Button variant="secondary" icon={<IconPlus size={16} />}>
+              Məkan əlavə et
+            </Button>
+          </Link>
+        }
+      />
+
+      <div className="mb-5 max-w-sm">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ad və ya ünvan ilə axtar..."
+          icon={<IconSearch size={16} />}
+          aria-label="Məkan axtar"
+        />
       </div>
 
-      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ad və ya ünvan ilə axtar..." />
+      {error && <Alert tone="error" className="mb-5">{error}</Alert>}
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
-
-      {filtered.length === 0 ? (
-        <Empty title="Məkan tapılmadı" hint="İlk məkanı siz əlavə edin." />
+      {loading ? (
+        <VenueGridSkeleton />
+      ) : filtered.length === 0 ? (
+        <Empty
+          icon={<IconBuilding size={20} />}
+          title={query ? `"${query}" üzrə məkan tapılmadı` : 'Hələ məkan yoxdur'}
+          hint={query ? 'Axtarışı dəyişib yenidən yoxlayın.' : 'İlk klubu siz qeydiyyatdan keçirin.'}
+          action={
+            !query ? (
+              <Link to="/venues/register">
+                <Button icon={<IconPlus size={16} />}>Məkan əlavə et</Button>
+              </Link>
+            ) : undefined
+          }
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((v) => (
-            <Link key={v.id} to={`/venues/${v.id}`}>
-              <Card className="overflow-hidden !p-0 transition hover:shadow-md">
-                <div className="h-40 w-full bg-wood-100">
-                  {v.photoUrls[0] ? (
-                    <img src={v.photoUrls[0]} alt={v.name} className="h-40 w-full object-cover" />
-                  ) : (
-                    <div className="flex h-40 items-center justify-center text-4xl text-wood-300">🎱</div>
+            <Link key={v.id} to={`/venues/${v.id}`} className="group">
+              <Card padded={false} interactive className="h-full overflow-hidden">
+                <div className="relative h-44 overflow-hidden">
+                  <VenuePhoto
+                    src={v.photoUrls[0]}
+                    alt={v.name}
+                    className="transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                  {v.photoUrls.length > 1 && (
+                    <span className="absolute right-2 top-2 rounded-full bg-ink-950/55 px-2 py-0.5 text-[11px] font-medium text-cream backdrop-blur-sm">
+                      {v.photoUrls.length} şəkil
+                    </span>
                   )}
                 </div>
+
                 <div className="p-4">
-                  <div className="font-semibold text-ink-900">{v.name}</div>
-                  {v.address && <div className="mt-0.5 text-sm text-ink-500">📍 {v.address}</div>}
+                  <h2 className="truncate font-display text-base font-semibold text-ink-900">
+                    {v.name}
+                  </h2>
+                  {v.address && (
+                    <p className="mt-1 flex items-center gap-1 truncate text-sm text-ink-500">
+                      <IconPin size={14} className="shrink-0 text-ink-400" />
+                      {v.address}
+                    </p>
+                  )}
                   {v.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-ink-500">{v.description}</p>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-500">
+                      {v.description}
+                    </p>
                   )}
                 </div>
               </Card>
@@ -70,6 +108,22 @@ export function Venues() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+export function VenueGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="overflow-hidden rounded-xl border border-rail bg-card">
+          <Skeleton className="h-44 rounded-none" />
+          <div className="space-y-2 p-4">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

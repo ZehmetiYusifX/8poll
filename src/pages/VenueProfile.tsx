@@ -1,26 +1,45 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { VenueApi, TournamentApi } from '../api'
 import { useAuth } from '../context/AuthContext'
-import {
-  Button, Card, PageLoader, Empty, Field, Input, Textarea, ErrorText, Badge, Spinner,
-} from '../components/ui'
+import { VenuePhoto } from '../components/VenuePhoto'
 import { Modal } from '../components/Modal'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { TournamentCard } from '../components/TournamentCard'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Empty,
+  ErrorText,
+  Field,
+  Input,
+  PageHeader,
+  SectionHeader,
+  Skeleton,
+  Textarea,
+  cx,
+} from '../components/ui'
+import {
+  IconImage,
+  IconMedal,
+  IconPencil,
+  IconPhone,
+  IconPin,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from '../components/icons'
+import { useToast } from '../components/Toast'
 import { extractErrorMessage } from '../api/client'
-import { formatDate } from '../utils/format'
-import type { Venue, Tournament, TournamentStatus } from '../api/types'
-
-const statusMeta: Record<TournamentStatus, { text: string; tone: 'green' | 'yellow' | 'blue' | 'neutral' }> = {
-  REGISTRATION: { text: 'Qeydiyyat açıq', tone: 'green' },
-  ONGOING: { text: 'Davam edir', tone: 'yellow' },
-  COMPLETED: { text: 'Bitdi', tone: 'blue' },
-  CANCELLED: { text: 'Ləğv edildi', tone: 'neutral' },
-}
+import type { Venue, Tournament } from '../api/types'
 
 export function VenueProfile() {
   const { id } = useParams()
   const venueId = Number(id)
   const { user } = useAuth()
+  const toast = useToast()
 
   const [venue, setVenue] = useState<Venue | null>(null)
   const [tournaments, setTournaments] = useState<Tournament[]>([])
@@ -30,6 +49,8 @@ export function VenueProfile() {
   const [editOpen, setEditOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [lightbox, setLightbox] = useState<number | null>(null)
+  const [photoToRemove, setPhotoToRemove] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -37,6 +58,7 @@ export function VenueProfile() {
       const [v, allT] = await Promise.all([VenueApi.get(venueId), TournamentApi.list()])
       setVenue(v)
       setTournaments(allT.filter((t) => t.venue.id === venueId))
+      setError('')
     } catch (e) {
       setError(extractErrorMessage(e))
     } finally {
@@ -54,124 +76,347 @@ export function VenueProfile() {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
-    setError('')
     try {
-      const updated = await VenueApi.uploadPhoto(venueId, file)
-      setVenue(updated)
+      setVenue(await VenueApi.uploadPhoto(venueId, file))
+      toast.success('Şəkil yükləndi')
     } catch (err) {
-      setError(extractErrorMessage(err))
+      toast.error(extractErrorMessage(err))
     } finally {
       setUploading(false)
       if (fileInput.current) fileInput.current.value = ''
     }
   }
 
-  const onRemovePhoto = async (url: string) => {
+  const removePhoto = async (url: string) => {
     try {
-      const updated = await VenueApi.removePhoto(venueId, url)
-      setVenue(updated)
+      setVenue(await VenueApi.removePhoto(venueId, url))
+      toast.success('Şəkil silindi')
     } catch (err) {
-      setError(extractErrorMessage(err))
+      toast.error(extractErrorMessage(err))
     }
   }
 
-  if (loading) return <PageLoader />
-  if (!venue) return <Empty title="Məkan tapılmadı" />
+  if (loading) return <VenueSkeleton />
+  if (!venue) return <Empty title="Məkan tapılmadı" hint={error || 'Bu məkan mövcud deyil.'} />
+
+  const photos = venue.photoUrls
+  const active = tournaments.filter((t) => t.status !== 'COMPLETED' && t.status !== 'CANCELLED')
 
   return (
-    <div className="space-y-6">
-      {error && <p className="text-sm text-red-700">{error}</p>}
+    <div className="space-y-7">
+      {error && <Alert tone="error">{error}</Alert>}
 
-      {/* Şəkil qalereyası */}
+      {/* ── Qalereya ─────────────────────────────────────────── */}
       <div className="grid gap-2 sm:grid-cols-3">
-        <div className="sm:col-span-2 h-64 overflow-hidden rounded-xl bg-wood-100">
-          {venue.photoUrls[0] ? (
-            <img src={venue.photoUrls[0]} alt={venue.name} className="h-64 w-full object-cover" />
-          ) : (
-            <div className="flex h-64 items-center justify-center text-6xl text-wood-300">🎱</div>
+        <button
+          type="button"
+          onClick={() => photos[0] && setLightbox(0)}
+          disabled={!photos[0]}
+          className="relative h-56 overflow-hidden rounded-xl sm:col-span-2 sm:h-72 disabled:cursor-default"
+        >
+          <VenuePhoto src={photos[0]} alt={venue.name} />
+          {photos.length > 0 && (
+            <span className="absolute inset-0 bg-ink-950/0 transition-colors hover:bg-ink-950/10" />
           )}
-        </div>
+        </button>
+
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
-          {venue.photoUrls.slice(1, 3).map((url) => (
-            <div key={url} className="group relative h-[124px] overflow-hidden rounded-xl bg-wood-100">
-              <img src={url} alt="" className="h-full w-full object-cover" />
-              {isOwner && (
-                <button
-                  onClick={() => onRemovePhoto(url)}
-                  className="absolute right-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100"
-                >
-                  Sil
-                </button>
-              )}
-            </div>
+          {[1, 2].map((i) => {
+            const url = photos[i]
+            return (
+              <div key={i} className="group relative h-28 overflow-hidden rounded-xl sm:h-[8.75rem]">
+                {url ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setLightbox(i)}
+                      className="block h-full w-full"
+                      aria-label={`${venue.name} — şəkil ${i + 1}`}
+                    >
+                      <VenuePhoto src={url} alt="" />
+                    </button>
+                    {isOwner && (
+                      <button
+                        type="button"
+                        onClick={() => setPhotoToRemove(url)}
+                        aria-label="Şəkli sil"
+                        className="absolute right-1.5 top-1.5 rounded-lg bg-ink-950/60 p-1.5 text-cream opacity-0 backdrop-blur-sm transition-opacity hover:bg-clay-700 focus-visible:opacity-100 group-hover:opacity-100"
+                      >
+                        <IconTrash size={14} />
+                      </button>
+                    )}
+                  </>
+                ) : isOwner ? (
+                  <button
+                    type="button"
+                    onClick={() => fileInput.current?.click()}
+                    disabled={uploading}
+                    className="flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-rail-strong bg-cream text-ink-400 transition-colors hover:border-felt-300 hover:bg-felt-50 hover:text-felt-700"
+                  >
+                    <IconImage size={20} />
+                    <span className="text-xs font-medium">Şəkil əlavə et</span>
+                  </button>
+                ) : (
+                  <div className="h-full w-full rounded-xl bg-wood-100/60" />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {photos.length > 3 && (
+        <div className="flex flex-wrap gap-2">
+          {photos.slice(3).map((url, i) => (
+            <button
+              key={url}
+              type="button"
+              onClick={() => setLightbox(i + 3)}
+              className="h-16 w-24 overflow-hidden rounded-lg"
+            >
+              <VenuePhoto src={url} alt="" />
+            </button>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Başlıq + sahib idarəetməsi */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-ink-900">{venue.name}</h1>
-          {venue.address && <div className="mt-1 text-sm text-ink-500">📍 {venue.address}</div>}
-          {venue.phone && <div className="text-sm text-ink-500">📞 {venue.phone}</div>}
-        </div>
-        {isOwner && (
-          <div className="flex flex-wrap gap-2">
-            <input ref={fileInput} type="file" accept="image/*" hidden onChange={onUpload} />
-            <Button variant="secondary" disabled={uploading} onClick={() => fileInput.current?.click()}>
-              {uploading ? <Spinner /> : 'Şəkil yüklə'}
-            </Button>
-            <Button variant="secondary" onClick={() => setEditOpen(true)}>Redaktə et</Button>
-            <Button onClick={() => setCreateOpen(true)}>Turnir aç</Button>
-          </div>
-        )}
-      </div>
+      {/* ── Başlıq ───────────────────────────────────────────── */}
+      <PageHeader
+        eyebrow="Bilyard klubu"
+        title={venue.name}
+        subtitle={
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {venue.address && (
+              <span className="inline-flex items-center gap-1.5">
+                <IconPin size={15} className="text-ink-400" />
+                {venue.address}
+              </span>
+            )}
+            {venue.phone && (
+              <a
+                href={`tel:${venue.phone.replace(/\s/g, '')}`}
+                className="inline-flex items-center gap-1.5 text-felt-700 underline-offset-4 hover:underline"
+              >
+                <IconPhone size={15} />
+                {venue.phone}
+              </a>
+            )}
+          </span>
+        }
+        actions={
+          isOwner && (
+            <>
+              <input ref={fileInput} type="file" accept="image/*" hidden onChange={onUpload} />
+              <Button
+                variant="secondary"
+                icon={<IconImage size={16} />}
+                loading={uploading}
+                onClick={() => fileInput.current?.click()}
+              >
+                Şəkil yüklə
+              </Button>
+              <Button variant="secondary" icon={<IconPencil size={16} />} onClick={() => setEditOpen(true)}>
+                Redaktə et
+              </Button>
+              <Button icon={<IconPlus size={16} />} onClick={() => setCreateOpen(true)}>
+                Turnir aç
+              </Button>
+            </>
+          )
+        }
+      />
 
       {venue.description && (
         <Card>
-          <p className="whitespace-pre-line text-sm text-ink-700">{venue.description}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-ink-700">
+            {venue.description}
+          </p>
         </Card>
       )}
 
-      {/* Turnirlər */}
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-ink-900">Turnirlər</h2>
+      {/* ── Turnirlər ────────────────────────────────────────── */}
+      <section>
+        <SectionHeader
+          title="Turnirlər"
+          count={tournaments.length}
+          action={
+            active.length > 0 && <Badge tone="green">{active.length} aktiv</Badge>
+          }
+        />
         {tournaments.length === 0 ? (
-          <Empty title="Bu məkanda turnir yoxdur" hint={isOwner ? '“Turnir aç” ilə ilk turniri yaradın.' : undefined} />
+          <Empty
+            icon={<IconMedal size={20} />}
+            title="Bu məkanda turnir yoxdur"
+            hint={isOwner ? 'İlk turniri açın və oyunçuları toplayın.' : 'Turnir açıldıqda burada görünəcək.'}
+            action={
+              isOwner ? (
+                <Button icon={<IconPlus size={16} />} onClick={() => setCreateOpen(true)}>
+                  Turnir aç
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
-          <div className="space-y-3">
-            {tournaments.map((t) => {
-              const st = statusMeta[t.status]
-              return (
-                <Link key={t.id} to={`/tournaments/${t.id}`}>
-                  <Card className="flex items-center justify-between transition hover:shadow-md">
-                    <div>
-                      <div className="font-semibold text-ink-900">{t.name}</div>
-                      <div className="mt-0.5 text-xs text-ink-500">
-                        {t.participantCount}/{t.maxParticipants} iştirakçı
-                        {t.startAt && ` · ${formatDate(t.startAt)}`}
-                      </div>
-                    </div>
-                    <Badge tone={st.tone}>{st.text}</Badge>
-                  </Card>
-                </Link>
-              )
-            })}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {tournaments.map((t) => (
+              <TournamentCard key={t.id} tournament={t} hideVenue />
+            ))}
           </div>
         )}
-      </div>
+      </section>
+
+      {/* ── Dialoqlar ────────────────────────────────────────── */}
+      {lightbox != null && photos[lightbox] && (
+        <Lightbox
+          photos={photos}
+          index={lightbox}
+          name={venue.name}
+          onChange={setLightbox}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!photoToRemove}
+        title="Şəkli silmək?"
+        description="Bu şəkil məkan qalereyasından həmişəlik silinəcək."
+        confirmLabel="Sil"
+        onConfirm={async () => {
+          if (photoToRemove) await removePhoto(photoToRemove)
+        }}
+        onClose={() => setPhotoToRemove(null)}
+      />
 
       {isOwner && editOpen && (
-        <EditVenueModal venue={venue} onClose={() => setEditOpen(false)} onSaved={(v) => { setVenue(v); setEditOpen(false) }} />
+        <EditVenueModal
+          venue={venue}
+          onClose={() => setEditOpen(false)}
+          onSaved={(v) => {
+            setVenue(v)
+            setEditOpen(false)
+            toast.success('Məkan yeniləndi')
+          }}
+        />
       )}
+
       {isOwner && createOpen && (
-        <CreateTournamentModal venueId={venueId} onClose={() => setCreateOpen(false)} onCreated={() => { setCreateOpen(false); load() }} />
+        <CreateTournamentModal
+          venueId={venueId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => {
+            setCreateOpen(false)
+            load()
+            toast.success('Turnir yaradıldı')
+          }}
+        />
       )}
     </div>
   )
 }
 
-function EditVenueModal({ venue, onClose, onSaved }: { venue: Venue; onClose: () => void; onSaved: (v: Venue) => void }) {
+/* ── Şəkil baxışı ───────────────────────────────────────────── */
+
+function Lightbox({
+  photos,
+  index,
+  name,
+  onChange,
+  onClose,
+}: {
+  photos: string[]
+  index: number
+  name: string
+  onChange: (i: number) => void
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight') onChange((index + 1) % photos.length)
+      if (e.key === 'ArrowLeft') onChange((index - 1 + photos.length) % photos.length)
+    }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [index, photos.length, onChange, onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink-950/90 p-4 animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${name} şəkilləri`}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Bağla"
+        className="absolute right-4 top-4 rounded-lg p-2 text-cream/70 transition-colors hover:bg-white/10 hover:text-cream"
+      >
+        <IconX size={22} />
+      </button>
+
+      <img
+        src={photos[index]}
+        alt={`${name} — ${index + 1}`}
+        className="max-h-[80dvh] max-w-full rounded-lg object-contain shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+
+      {photos.length > 1 && (
+        <div className="mt-4 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {photos.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onChange(i)}
+              aria-label={`Şəkil ${i + 1}`}
+              className={cx(
+                'h-1.5 rounded-full transition-all duration-200',
+                i === index ? 'w-6 bg-cream' : 'w-1.5 bg-cream/35 hover:bg-cream/60',
+              )}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function VenueSkeleton() {
+  return (
+    <div className="space-y-7">
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Skeleton className="h-56 rounded-xl sm:col-span-2 sm:h-72" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+          <Skeleton className="h-28 rounded-xl sm:h-[8.75rem]" />
+          <Skeleton className="h-28 rounded-xl sm:h-[8.75rem]" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-64" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+    </div>
+  )
+}
+
+/* ── Məkan redaktəsi ────────────────────────────────────────── */
+
+function EditVenueModal({
+  venue,
+  onClose,
+  onSaved,
+}: {
+  venue: Venue
+  onClose: () => void
+  onSaved: (v: Venue) => void
+}) {
   const [form, setForm] = useState({
     name: venue.name,
     address: venue.address ?? '',
@@ -185,16 +430,18 @@ function EditVenueModal({ venue, onClose, onSaved }: { venue: Venue; onClose: ()
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const submit = async () => {
+    if (form.name.trim().length < 3) return setError('Məkan adı ən azı 3 simvol olmalıdır')
     setLoading(true)
     setError('')
     try {
-      const updated = await VenueApi.update(venue.id, {
-        name: form.name.trim(),
-        address: form.address.trim(),
-        description: form.description.trim(),
-        phone: form.phone.trim(),
-      })
-      onSaved(updated)
+      onSaved(
+        await VenueApi.update(venue.id, {
+          name: form.name.trim(),
+          address: form.address.trim(),
+          description: form.description.trim(),
+          phone: form.phone.trim(),
+        }),
+      )
     } catch (e) {
       setError(extractErrorMessage(e))
     } finally {
@@ -205,22 +452,46 @@ function EditVenueModal({ venue, onClose, onSaved }: { venue: Venue; onClose: ()
   return (
     <Modal open onClose={onClose} title="Məkanı redaktə et">
       <div className="space-y-4">
-        <Field label="Ad"><Input value={form.name} onChange={set('name')} /></Field>
-        <Field label="Ünvan"><Input value={form.address} onChange={set('address')} /></Field>
-        <Field label="Təsvir"><Textarea rows={3} value={form.description} onChange={set('description')} /></Field>
-        <Field label="Telefon"><Input value={form.phone} onChange={set('phone')} /></Field>
+        <Field label="Ad">
+          <Input value={form.name} onChange={set('name')} />
+        </Field>
+        <Field label="Ünvan" optional>
+          <Input value={form.address} onChange={set('address')} />
+        </Field>
+        <Field label="Telefon" optional>
+          <Input type="tel" value={form.phone} onChange={set('phone')} />
+        </Field>
+        <Field label="Təsvir" optional hint="Masaların sayı, iş saatları, xidmətlər">
+          <Textarea rows={4} maxLength={1000} value={form.description} onChange={set('description')} />
+        </Field>
         <ErrorText>{error}</ErrorText>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={onClose} disabled={loading}>Ləğv et</Button>
-          <Button className="flex-1" onClick={submit} disabled={loading}>{loading ? 'Saxlanılır...' : 'Saxla'}</Button>
+        <div className="flex gap-2 pt-1">
+          <Button variant="secondary" block onClick={onClose} disabled={loading}>
+            Ləğv et
+          </Button>
+          <Button block loading={loading} onClick={submit}>
+            Yadda saxla
+          </Button>
         </div>
       </div>
     </Modal>
   )
 }
 
-function CreateTournamentModal({ venueId, onClose, onCreated }: { venueId: number; onClose: () => void; onCreated: () => void }) {
-  const [form, setForm] = useState({ name: '', description: '', startAt: '', maxParticipants: '8' })
+/* ── Turnir yaratma ─────────────────────────────────────────── */
+
+const BRACKET_SIZES = [4, 8, 16, 32]
+
+function CreateTournamentModal({
+  venueId,
+  onClose,
+  onCreated,
+}: {
+  venueId: number
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [form, setForm] = useState({ name: '', description: '', startAt: '', maxParticipants: 8 })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -234,7 +505,7 @@ function CreateTournamentModal({ venueId, onClose, onCreated }: { venueId: numbe
         venueId,
         description: form.description.trim() || undefined,
         startAt: form.startAt ? new Date(form.startAt).toISOString() : undefined,
-        maxParticipants: Number(form.maxParticipants) || 8,
+        maxParticipants: form.maxParticipants,
       })
       onCreated()
     } catch (e) {
@@ -245,26 +516,70 @@ function CreateTournamentModal({ venueId, onClose, onCreated }: { venueId: numbe
   }
 
   return (
-    <Modal open onClose={onClose} title="Yeni turnir">
+    <Modal open onClose={onClose} title="Yeni turnir" description="Qeydiyyat açıq olacaq — oyunçular özləri qoşulacaq.">
       <div className="space-y-4">
         <Field label="Turnir adı">
-          <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Yay Kuboku" autoFocus />
+          <Input
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="Yay Kuboku"
+            autoFocus
+          />
         </Field>
-        <Field label="Təsvir">
-          <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+
+        <Field label="Təsvir" optional>
+          <Textarea
+            rows={2}
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            placeholder="Format, mükafat fondu, qaydalar..."
+          />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Başlama tarixi">
-            <Input type="datetime-local" value={form.startAt} onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))} />
-          </Field>
-          <Field label="Maks. iştirakçı">
-            <Input type="number" min={2} value={form.maxParticipants} onChange={(e) => setForm((f) => ({ ...f, maxParticipants: e.target.value }))} />
-          </Field>
+
+        <Field label="Başlama tarixi" optional>
+          <Input
+            type="datetime-local"
+            value={form.startAt}
+            onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))}
+          />
+        </Field>
+
+        <div>
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+            İştirakçı sayı
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {BRACKET_SIZES.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, maxParticipants: n }))}
+                aria-pressed={form.maxParticipants === n}
+                className={cx(
+                  'rounded-lg border py-2 text-sm font-semibold tabular-nums transition-colors',
+                  form.maxParticipants === n
+                    ? 'border-felt-600 bg-felt-50 text-felt-800'
+                    : 'border-rail-strong bg-cream text-ink-600 hover:border-wood-300',
+                )}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs text-ink-400">
+            Turniri başlatdıqda cədvəl avtomatik qurulacaq.
+          </p>
         </div>
+
         <ErrorText>{error}</ErrorText>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={onClose} disabled={loading}>Ləğv et</Button>
-          <Button className="flex-1" onClick={submit} disabled={loading}>{loading ? 'Yaradılır...' : 'Yarat'}</Button>
+
+        <div className="flex gap-2 pt-1">
+          <Button variant="secondary" block onClick={onClose} disabled={loading}>
+            Ləğv et
+          </Button>
+          <Button block loading={loading} onClick={submit}>
+            Yarat
+          </Button>
         </div>
       </div>
     </Modal>

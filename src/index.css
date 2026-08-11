@@ -1,66 +1,259 @@
 @import "tailwindcss";
 
 /*
- * 8poll dizayn sistemi — klassik bilyard klubu:
- * isti krem/kağız fon, dərin mahud yaşılı, qoz ağacı (wood) vurğular, serif başlıqlar.
+ * Şriftlər öz serverimizdən verilir (CDN-siz) — üçüncü tərəf asılılığı,
+ * FOUT və məxfilik problemi olmasın. `wght` variantı seçilib: yalnız
+ * qalınlıq oxu lazımdır, ona görə fayllar ən kiçik ölçüdədir.
+ * latin-ext alt dəsti Azərbaycan hərflərini (ə, ğ, ı, ö, ş, ü, ç) əhatə edir.
+ */
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/fraunces/wght.css";
+
+/*
+ * 8poll dizayn sistemi — klassik bilyard klubu.
+ *
+ * Metafora: kağız/keçə fon (paper), dərin mahud yaşılı (felt), qoz ağacı haşiyə
+ * və mis/brass vurğular. Rənglər isti tərəfə çəkilib — mavi-boz "default" hissi olmasın.
  */
 @theme {
-  /* Bilyard mahud yaşılı */
-  --color-felt-50: #eef5f0;
-  --color-felt-100: #d8e9de;
-  --color-felt-200: #b2d3bf;
-  --color-felt-300: #83b799;
-  --color-felt-400: #559874;
-  --color-felt-500: #2f7d54;
-  --color-felt-600: #206043;
-  --color-felt-700: #1b4d38;
-  --color-felt-800: #163d2d;
-  --color-felt-900: #123125;
+  /* ── Mahud yaşılı (əsas brend) ─────────────────────────────── */
+  --color-felt-50: #f0f6f2;
+  --color-felt-100: #dbeae1;
+  --color-felt-200: #b6d4c3;
+  --color-felt-300: #86b79c;
+  --color-felt-400: #559676;
+  --color-felt-500: #357a58;
+  --color-felt-600: #256145;
+  --color-felt-700: #1c4d37;
+  --color-felt-800: #163d2c;
+  --color-felt-900: #113124;
+  --color-felt-950: #0a1f16;
 
-  /* Qoz ağacı / rail (haşiyə) tonları */
-  --color-wood-100: #efe3d3;
-  --color-wood-200: #e0cbb0;
-  --color-wood-400: #b58a5f;
-  --color-wood-600: #855c37;
-  --color-wood-700: #6b4a2c;
+  /* ── Qoz ağacı / mis haşiyə (vurğu) ────────────────────────── */
+  --color-wood-50: #faf4ea;
+  --color-wood-100: #f2e7d5;
+  --color-wood-200: #e5d2b4;
+  --color-wood-300: #d3b78d;
+  --color-wood-400: #bd9663;
+  --color-wood-500: #a67b49;
+  --color-wood-600: #8a6239;
+  --color-wood-700: #6e4c2d;
+  --color-wood-800: #513826;
 
-  /* Mətn (tünd mürəkkəb) */
-  --color-ink-900: #20281f;
-  --color-ink-700: #3c463a;
-  --color-ink-500: #6a7267;
-  --color-ink-400: #8a9186;
+  /* ── Mətn (isti mürəkkəb) ──────────────────────────────────── */
+  --color-ink-950: #171b14;
+  --color-ink-900: #232a20;
+  --color-ink-800: #313a2d;
+  --color-ink-700: #3f4a3c;
+  --color-ink-600: #55604f;
+  --color-ink-500: #6d7767;
+  --color-ink-400: #8d9686;
+  --color-ink-300: #adb4a5;
 
-  /* Səthlər */
-  --color-paper: #f4efe4;
-  --color-card: #fbf8f1;
-  --color-cream: #faf7ef;
+  /* ── Səthlər və haşiyələr ──────────────────────────────────── */
+  --color-paper: #f5f1e8;
+  --color-card: #fffdf7;
+  --color-cream: #fbf7ee;
+  --color-rail: #e7dec9;
+  --color-rail-strong: #d8cbaf;
 
-  --font-display: Georgia, "Times New Roman", "Playfair Display", serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* ── Semantik çalarlar (hamısı isti tərəfə çəkilib) ────────── */
+  /* Gil qırmızısı — məğlubiyyət, xəta, dağıdıcı əməliyyatlar */
+  --color-clay-50: #fdf4f2;
+  --color-clay-100: #fbe4df;
+  --color-clay-200: #f4c9c1;
+  --color-clay-500: #c6483a;
+  --color-clay-600: #b03528;
+  --color-clay-700: #932b21;
+  --color-clay-800: #78241c;
+
+  /* Bal sarısı — gözləmə, xəbərdarlıq */
+  --color-honey-50: #fdf7e9;
+  --color-honey-100: #f9ecd2;
+  --color-honey-200: #f0daa9;
+  --color-honey-600: #b8780f;
+  --color-honey-700: #97620d;
+  --color-honey-800: #7a4f0c;
+
+  /* Polad mavisi — neytral məlumat, tamamlanmış hallar */
+  --color-steel-50: #eff3f6;
+  --color-steel-100: #dce5ec;
+  --color-steel-200: #c1d0dc;
+  --color-steel-700: #3d5a6d;
+  --color-steel-800: #314858;
+
+  /* ── Tipoqrafiya ───────────────────────────────────────────── */
+  --font-display: "Fraunces Variable", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ── Kölgələr (isti çalarlı, mavi-boz deyil) ───────────────── */
+  --shadow-xs: 0 1px 1px rgba(52, 40, 22, 0.05);
+  --shadow-sm: 0 1px 2px rgba(52, 40, 22, 0.05), 0 1px 3px rgba(52, 40, 22, 0.05);
+  --shadow-md: 0 2px 4px -1px rgba(52, 40, 22, 0.06), 0 8px 16px -6px rgba(52, 40, 22, 0.1);
+  --shadow-lg: 0 4px 8px -2px rgba(52, 40, 22, 0.06), 0 16px 32px -12px rgba(52, 40, 22, 0.16);
+  --shadow-xl: 0 24px 48px -16px rgba(52, 40, 22, 0.24);
+
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+
+  /* ── Hərəkət ───────────────────────────────────────────────── */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-in: fade-in 0.18s var(--ease-out-soft) both;
+  --animate-rise: rise 0.28s var(--ease-out-soft) both;
+  --animate-pop: pop 0.18s var(--ease-out-soft) both;
+  --animate-sheet-up: sheet-up 0.26s var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
 }
 
-html {
-  color-scheme: light;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background-color: var(--color-paper);
-  /* çox incə vinyet — kağız/mahud hissi, parıltısız */
-  background-image:
-    radial-gradient(120% 120% at 50% -10%, #ffffff 0%, transparent 40%),
-    radial-gradient(140% 100% at 50% 120%, #e9e2d3 0%, transparent 45%);
-  color: var(--color-ink-900);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+/* ─────────────────────────────────────────────────────────────
+   Baza
+   ───────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-paper);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv05" 1, "ss03" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /*
+   * Kağız/keçə vinyeti. Ayrıca sabit qatda saxlanılır —
+   * body-də `background-attachment: fixed` sürüşdürmədə ağır olur.
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(90% 60% at 50% -10%, rgba(255, 255, 255, 0.9) 0%, transparent 60%),
+      radial-gradient(100% 70% at 50% 110%, rgba(226, 216, 196, 0.7) 0%, transparent 55%);
+  }
+
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  /* Rəqəmlər həmişə eyni enli — cədvəl və hesablar tərpənməsin */
+  .tabular-nums, table, output {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Klaviatura ilə naviqasiya üçün görünən, siçanla klikdə görünməyən fokus */
+  :focus-visible {
+    outline: 2px solid var(--color-felt-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--color-felt-200);
+    color: var(--color-felt-950);
+  }
+
+  ::placeholder {
+    color: var(--color-ink-400);
+  }
+
+  /* Xrom-un sarı autofill fonunu kağız tonuna çevir */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-ink-900);
+    -webkit-box-shadow: 0 0 0 1000px var(--color-cream) inset;
+    caret-color: var(--color-ink-900);
+  }
+
+  /* Rəqəm inputlarında ox düymələri dizaynı pozur */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  img {
+    color: transparent;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-rail-strong);
+    border: 2px solid var(--color-paper);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-wood-300); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
-h1, h2, h3, .font-display {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
+/* ─────────────────────────────────────────────────────────────
+   Kiçik köməkçi siniflər
+   ───────────────────────────────────────────────────────────── */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
 
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #d8cfbd; border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: #c4b8a1; }
+/* Skeleton üçün axan işıq */
+@utility skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-rail) 25%,
+    color-mix(in srgb, var(--color-rail) 45%, white) 50%,
+    var(--color-rail) 75%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Başlıqlarda istifadə olunan mis rəngli nazik xətt */
+@utility rule-brass {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-wood-300) 0%,
+    color-mix(in srgb, var(--color-wood-300) 25%, transparent) 100%
+  );
+}

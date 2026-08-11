@@ -1,5 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <circle cx="32" cy="32" r="30" fill="#0f172a"/>
-  <circle cx="32" cy="32" r="14" fill="#ffffff"/>
-  <text x="32" y="38" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">8</text>
+  <defs>
+    <radialGradient id="ball" cx="38%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#4a5147"/>
+      <stop offset="55%" stop-color="#232a20"/>
+      <stop offset="100%" stop-color="#0d100c"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#ball)"/>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#0a1f16" stroke-width="2"/>
+  <circle cx="32" cy="32" r="15" fill="#fffdf7"/>
+  <text x="32" y="39.5" font-family="Georgia, 'Times New Roman', serif" font-size="21" font-weight="bold" fill="#171b14" text-anchor="middle">8</text>
+  <ellipse cx="23" cy="19" rx="7.5" ry="5" fill="#ffffff" opacity="0.22" transform="rotate(-28 23 19)"/>
 </svg>

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Button, Field, Input, ErrorText, Spinner } from '../components/ui'
-import { AuthShell } from './Login'
+import { AuthShell } from '../components/AuthShell'
+import { Button, ErrorText, Field, Input, PasswordInput } from '../components/ui'
 import { extractErrorMessage } from '../api/client'
 
 export function Register() {
@@ -12,14 +12,20 @@ export function Register() {
   const [form, setForm] = useState({ username: '', fullName: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [touched, setTouched] = useState(false)
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
+  const passwordError = touched && form.password.length > 0 && form.password.length < 6
+    ? 'Ən azı 6 simvol olmalıdır'
+    : undefined
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (form.password.length < 6) return setError('Şifrə ən azı 6 simvol olmalıdır')
+    setTouched(true)
+    if (form.password.length < 6) return
     setLoading(true)
     try {
       await register({
@@ -37,37 +43,90 @@ export function Register() {
   }
 
   return (
-    <AuthShell subtitle="Hesab yaradın və ilk dəvətinizi göndərin.">
-      <form onSubmit={submit} className="space-y-4">
-        <Field label="İstifadəçi adı">
-          <Input value={form.username} onChange={set('username')} placeholder="aslan" autoFocus />
-        </Field>
-        <Field label="Ad Soyad">
-          <Input value={form.fullName} onChange={set('fullName')} placeholder="Aslan Məmmədov" />
-        </Field>
+    <AuthShell
+      title="Hesab yaradın"
+      subtitle="Bir neçə saniyə çəkir — sonra ilk dəvətinizi göndərə bilərsiniz."
+      footer={
+        <>
+          <p>
+            Artıq hesabınız var?{' '}
+            <Link to="/login" className="font-semibold text-felt-700 underline-offset-4 hover:underline">
+              Daxil olun
+            </Link>
+          </p>
+          <p>
+            Məkan sahibisiniz?{' '}
+            <Link to="/venues/register" className="font-semibold text-felt-700 underline-offset-4 hover:underline">
+              Klub hesabı açın
+            </Link>
+          </p>
+        </>
+      }
+    >
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="İstifadəçi adı">
+            <Input
+              value={form.username}
+              onChange={set('username')}
+              placeholder="aslan"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              autoFocus
+            />
+          </Field>
+          <Field label="Ad Soyad">
+            <Input
+              value={form.fullName}
+              onChange={set('fullName')}
+              placeholder="Aslan Məmmədov"
+              autoComplete="name"
+            />
+          </Field>
+        </div>
+
         <Field label="E-poçt">
-          <Input type="email" value={form.email} onChange={set('email')} placeholder="aslan@example.com" />
+          <Input
+            type="email"
+            value={form.email}
+            onChange={set('email')}
+            placeholder="aslan@example.com"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+          />
         </Field>
-        <Field label="Şifrə">
-          <Input type="password" value={form.password} onChange={set('password')} placeholder="ən azı 6 simvol" />
+
+        <Field
+          label="Şifrə"
+          hint="Ən azı 6 simvol"
+          error={passwordError}
+        >
+          <PasswordInput
+            value={form.password}
+            onChange={set('password')}
+            placeholder="••••••••"
+            autoComplete="new-password"
+          />
         </Field>
+
         <ErrorText>{error}</ErrorText>
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? <Spinner /> : 'Qeydiyyatdan keç'}
+
+        <Button
+          type="submit"
+          size="lg"
+          block
+          loading={loading}
+          disabled={!form.username || !form.email || !form.password}
+        >
+          Qeydiyyatdan keç
         </Button>
+
+        <p className="text-center text-xs leading-relaxed text-ink-400">
+          Başlanğıc reytinqiniz <span className="font-semibold text-ink-500">1200 xal</span> olacaq.
+        </p>
       </form>
-      <p className="mt-5 text-center text-sm text-ink-500">
-        Artıq hesabınız var?{' '}
-        <Link to="/login" className="font-semibold text-felt-700 hover:text-felt-800">
-          Daxil olun
-        </Link>
-      </p>
-      <p className="mt-3 text-center text-sm text-ink-500">
-        Məkan sahibisiniz?{' '}
-        <Link to="/venues/register" className="font-semibold text-felt-700 hover:text-felt-800">
-          Məkan kimi qeydiyyat
-        </Link>
-      </p>
     </AuthShell>
   )
 }

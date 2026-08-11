@@ -1,15 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LeaderboardApi } from '../api'
 import { Avatar } from '../components/Avatar'
-import { Card, PageLoader, Empty } from '../components/ui'
+import { Alert, Card, Empty, Input, ListSkeleton, PageHeader, cx } from '../components/ui'
+import { IconSearch, IconTrophy, IconUsers } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import type { LeaderboardEntry } from '../api/types'
 
+/** İlk üç yer üçün medal rəngləri */
+const MEDAL: Record<number, { ring: string; text: string; bg: string; label: string }> = {
+  1: { ring: 'ring-[#c8a11e]', text: 'text-[#7d6210]', bg: 'bg-[#fdf4d8]', label: 'Qızıl' },
+  2: { ring: 'ring-[#9aa3a8]', text: 'text-[#5c666b]', bg: 'bg-[#eef1f2]', label: 'Gümüş' },
+  3: { ring: 'ring-[#b0703d]', text: 'text-[#7d4c26]', bg: 'bg-[#faeade]', label: 'Bronz' },
+}
+
 export function Leaderboard() {
   const { user } = useAuth()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -20,57 +29,142 @@ export function Leaderboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <PageLoader />
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return entries
+    return entries.filter(
+      (e) =>
+        e.player.fullName.toLowerCase().includes(q) || e.player.username.toLowerCase().includes(q),
+    )
+  }, [entries, query])
 
-  const medal = (rank: number) =>
-    rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null
+  const myEntry = user ? entries.find((e) => e.player.id === user.id) : undefined
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-ink-900">Reytinq cədvəli</h1>
-        <p className="text-sm text-ink-500">Elo reytinqinə görə ən yaxşı oyunçular</p>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Elo reytinqi"
+        title="Reytinq cədvəli"
+        subtitle="Təsdiqlənmiş maçlar əsasında hesablanan sıralama"
+        actions={
+          myEntry && (
+            <div className="flex items-center gap-2.5 rounded-lg border border-rail bg-card px-3.5 py-2 shadow-xs">
+              <span className="text-xs text-ink-500">Sizin yeriniz</span>
+              <span className="font-display text-lg font-semibold tabular-nums text-felt-700">
+                {myEntry.rank}.
+              </span>
+              <span className="text-xs tabular-nums text-ink-400">/ {entries.length}</span>
+            </div>
+          )
+        }
+      />
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <Alert tone="error" className="mb-5">{error}</Alert>}
 
-      {entries.length === 0 ? (
-        <Empty title="Hələ oyunçu yoxdur" />
+      {loading ? (
+        <ListSkeleton rows={8} />
+      ) : entries.length === 0 ? (
+        <Empty
+          icon={<IconTrophy size={20} />}
+          title="Cədvəl hələ boşdur"
+          hint="İlk təsdiqlənmiş maçdan sonra sıralama formalaşacaq."
+        />
       ) : (
-        <Card className="p-0 overflow-hidden">
-          <div className="divide-y divide-white/5">
-            {entries.map(({ rank, player }) => {
-              const isMe = player.id === user?.id
-              return (
-                <Link
-                  key={player.id}
-                  to={`/players/${player.id}`}
-                  className={`flex items-center gap-4 px-4 py-3 transition hover:bg-wood-100/60 ${
-                    isMe ? 'bg-felt-100' : ''
-                  }`}
-                >
-                  <div className="w-8 shrink-0 text-center text-lg font-bold tabular-nums text-ink-500">
-                    {medal(rank) ?? rank}
-                  </div>
-                  <Avatar name={player.fullName} color={player.avatarColor} size={40} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-semibold text-ink-900">{player.fullName}</span>
-                      {isMe && <span className="text-xs text-felt-700">(siz)</span>}
-                    </div>
-                    <div className="text-xs text-ink-500">
-                      @{player.username} · {player.wins}Q / {player.losses}M · {player.gamesPlayed} oyun
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-black tabular-nums text-felt-700">{player.rating}</div>
-                    <div className="text-xs text-ink-400">xal</div>
-                  </div>
-                </Link>
-              )
-            })}
+        <>
+          <div className="mb-4 max-w-sm">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Oyunçu axtar..."
+              icon={<IconSearch size={16} />}
+              aria-label="Oyunçu axtar"
+            />
           </div>
-        </Card>
+
+          {filtered.length === 0 ? (
+            <Empty icon={<IconUsers size={20} />} title={`"${query}" üzrə oyunçu tapılmadı`} />
+          ) : (
+            <Card padded={false} className="overflow-hidden">
+              {/* Sütun başlıqları — yalnız geniş ekranlarda */}
+              <div className="hidden items-center gap-4 border-b border-rail bg-cream px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400 sm:flex">
+                <span className="w-9 text-center">Yer</span>
+                <span className="flex-1">Oyunçu</span>
+                <span className="w-28 text-center">Q / M</span>
+                <span className="w-16 text-center">Oyun</span>
+                <span className="w-20 text-right">Reytinq</span>
+              </div>
+
+              <ul className="divide-y divide-rail">
+                {filtered.map(({ rank, player }) => {
+                  const isMe = player.id === user?.id
+                  const medal = MEDAL[rank]
+                  return (
+                    <li key={player.id}>
+                      <Link
+                        to={`/players/${player.id}`}
+                        className={cx(
+                          'flex items-center gap-3 px-3 py-3 transition-colors sm:gap-4 sm:px-4',
+                          isMe ? 'bg-felt-50 hover:bg-felt-100' : 'hover:bg-cream',
+                        )}
+                      >
+                        <span
+                          className={cx(
+                            'flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold tabular-nums',
+                            medal
+                              ? `${medal.bg} ${medal.text} ring-2 ${medal.ring}`
+                              : 'bg-wood-50 text-ink-500',
+                          )}
+                          title={medal?.label}
+                        >
+                          {rank}
+                        </span>
+
+                        <Avatar name={player.fullName} color={player.avatarColor} size={40} />
+
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2">
+                            <span className="truncate font-semibold text-ink-900">
+                              {player.fullName}
+                            </span>
+                            {isMe && (
+                              <span className="shrink-0 rounded-full bg-felt-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cream">
+                                Siz
+                              </span>
+                            )}
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-ink-400">
+                            @{player.username}
+                            <span className="sm:hidden">
+                              {' · '}
+                              {player.wins}Q / {player.losses}M · {player.gamesPlayed} oyun
+                            </span>
+                          </span>
+                        </span>
+
+                        <span className="hidden w-28 items-center justify-center gap-1.5 text-sm tabular-nums sm:flex">
+                          <span className="font-semibold text-felt-700">{player.wins}</span>
+                          <span className="text-ink-300">/</span>
+                          <span className="font-semibold text-clay-700">{player.losses}</span>
+                        </span>
+
+                        <span className="hidden w-16 text-center text-sm tabular-nums text-ink-500 sm:block">
+                          {player.gamesPlayed}
+                        </span>
+
+                        <span className="w-16 text-right sm:w-20">
+                          <span className="font-display text-lg font-semibold tabular-nums text-ink-900">
+                            {player.rating}
+                          </span>
+                          <span className="ml-1 text-[11px] text-ink-400">xal</span>
+                        </span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          )}
+        </>
       )}
     </div>
   )

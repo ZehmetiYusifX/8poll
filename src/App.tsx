@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
-import { PageLoader } from './components/ui'
+import { BootLoader } from './components/ui'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { VenueRegister } from './pages/VenueRegister'
@@ -21,7 +21,7 @@ import { TournamentDetail } from './pages/TournamentDetail'
 /** Artıq daxil olmuş istifadəçini auth səhifələrindən yönləndirir */
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
-  if (loading) return <PageLoader />
+  if (loading) return <BootLoader />
   if (user) return <Navigate to="/" replace />
   return <>{children}</>
 }

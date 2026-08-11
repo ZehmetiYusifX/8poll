@@ -30,9 +30,10 @@ export function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as { message?: string } | undefined
     if (data?.message) return data.message
-    if (err.response?.status === 401) return 'Sessiya bitib, yeniden daxil olun'
-    if (err.code === 'ERR_NETWORK') return 'Serverle elaqe yoxdur. Backend isleyirmi?'
+    if (err.response?.status === 401) return 'Sessiya bitib, yenidən daxil olun'
+    if (err.response?.status === 403) return 'Bu əməliyyat üçün icazəniz yoxdur'
+    if (err.code === 'ERR_NETWORK') return 'Server ilə əlaqə yoxdur. Backend işləyirmi?'
     return err.message
   }
-  return 'Naməlum xeta bas verdi'
+  return 'Naməlum xəta baş verdi'
 }

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { VenueApi } from '../api'
-import { Card, PageLoader, Empty } from '../components/ui'
+import { VenuePhoto } from '../components/VenuePhoto'
+import { VenueGridSkeleton } from './Venues'
+import { Alert, Button, Card, Empty, PageHeader } from '../components/ui'
+import { IconArrowRight, IconBuilding, IconPin, IconPlus } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import type { Venue } from '../api/types'
 
-/** Məkan sahibinin öz məkanları - idarəetmə üçün giriş nöqtəsi */
+/** Məkan sahibinin öz məkanları — idarəetmə üçün giriş nöqtəsi */
 export function VenueMine() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,35 +21,55 @@ export function VenueMine() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <PageLoader />
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-ink-900">Məkanım</h1>
-        <p className="text-sm text-ink-500">Məkanı idarə et, şəkil yüklə, turnir aç</p>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Klub idarəetməsi"
+        title="Məkanım"
+        subtitle="Məkan məlumatlarını yenilə, şəkil yüklə və turnir aç"
+      />
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <Alert tone="error" className="mb-5">{error}</Alert>}
 
-      {venues.length === 0 ? (
-        <Empty title="Məkanınız yoxdur" hint="Məkan sahibi hesabı ilə daxil olun." />
+      {loading ? (
+        <VenueGridSkeleton count={2} />
+      ) : venues.length === 0 ? (
+        <Empty
+          icon={<IconBuilding size={20} />}
+          title="Hələ məkanınız yoxdur"
+          hint="Məkan sahibi hesabı ilə qeydiyyatdan keçin — sonra buradan idarə edə bilərsiniz."
+          action={
+            <Link to="/venues/register">
+              <Button icon={<IconPlus size={16} />}>Məkan qeydiyyatı</Button>
+            </Link>
+          }
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {venues.map((v) => (
-            <Link key={v.id} to={`/venues/${v.id}`}>
-              <Card className="overflow-hidden !p-0 transition hover:shadow-md">
-                <div className="h-36 w-full bg-wood-100">
-                  {v.photoUrls[0] ? (
-                    <img src={v.photoUrls[0]} alt={v.name} className="h-36 w-full object-cover" />
-                  ) : (
-                    <div className="flex h-36 items-center justify-center text-4xl text-wood-300">🎱</div>
-                  )}
+            <Link key={v.id} to={`/venues/${v.id}`} className="group">
+              <Card padded={false} interactive className="h-full overflow-hidden">
+                <div className="h-40 overflow-hidden">
+                  <VenuePhoto
+                    src={v.photoUrls[0]}
+                    alt={v.name}
+                    className="transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
                 </div>
                 <div className="p-4">
-                  <div className="font-semibold text-ink-900">{v.name}</div>
-                  {v.address && <div className="mt-0.5 text-sm text-ink-500">📍 {v.address}</div>}
-                  <div className="mt-2 text-sm font-medium text-felt-700">İdarə et →</div>
+                  <h2 className="truncate font-display text-base font-semibold text-ink-900">
+                    {v.name}
+                  </h2>
+                  {v.address && (
+                    <p className="mt-1 flex items-center gap-1 truncate text-sm text-ink-500">
+                      <IconPin size={14} className="shrink-0 text-ink-400" />
+                      {v.address}
+                    </p>
+                  )}
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-felt-700">
+                    İdarə et
+                    <IconArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+                  </span>
                 </div>
               </Card>
             </Link>

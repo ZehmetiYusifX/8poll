@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Button, Card, Field, Input, ErrorText, Spinner } from '../components/ui'
+import { AuthShell } from '../components/AuthShell'
+import { Button, ErrorText, Field, Input, PasswordInput } from '../components/ui'
 import { extractErrorMessage } from '../api/client'
+
+const DEMO = { username: 'aslan', password: 'parol123' }
 
 export function Login() {
   const { login } = useAuth()
@@ -29,54 +32,71 @@ export function Login() {
     }
   }
 
+  const fillDemo = () => {
+    setUsername(DEMO.username)
+    setPassword(DEMO.password)
+    setError('')
+  }
+
   return (
-    <AuthShell subtitle="Xoş gəlmisiniz! Reytinqinizi yüksəltməyə davam edin.">
-      <form onSubmit={submit} className="space-y-4">
+    <AuthShell
+      title="Yenidən xoş gəldiniz"
+      subtitle="Hesabınıza daxil olun və reytinqinizi yüksəltməyə davam edin."
+      footer={
+        <>
+          <p>
+            Hesabınız yoxdur?{' '}
+            <Link to="/register" className="font-semibold text-felt-700 underline-offset-4 hover:underline">
+              Qeydiyyatdan keçin
+            </Link>
+          </p>
+          <p>
+            Məkan sahibisiniz?{' '}
+            <Link to="/venues/register" className="font-semibold text-felt-700 underline-offset-4 hover:underline">
+              Klub hesabı açın
+            </Link>
+          </p>
+        </>
+      }
+    >
+      <form onSubmit={submit} className="space-y-4" noValidate>
         <Field label="İstifadəçi adı">
-          <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="aslan" autoFocus />
+          <Input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="aslan"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoFocus
+          />
         </Field>
+
         <Field label="Şifrə">
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" />
+          <PasswordInput
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+          />
         </Field>
+
         <ErrorText>{error}</ErrorText>
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? <Spinner /> : 'Daxil ol'}
+
+        <Button type="submit" size="lg" block loading={loading} disabled={!username || !password}>
+          Daxil ol
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-ink-500">
-        Hesabınız yoxdur?{' '}
-        <Link to="/register" className="font-semibold text-felt-700 hover:text-felt-800">
-          Qeydiyyatdan keçin
-        </Link>
-      </p>
-      <p className="mt-3 text-center text-sm text-ink-500">
-        Məkan sahibisiniz?{' '}
-        <Link to="/venues/register" className="font-semibold text-felt-700 hover:text-felt-800">
-          Məkan kimi qeydiyyat
-        </Link>
-      </p>
-      <p className="mt-3 text-center text-xs text-ink-400">
-        Demo: <b>aslan</b> / <b>parol123</b>
-      </p>
-    </AuthShell>
-  )
-}
 
-export function AuthShell({ children, subtitle }: { children: React.ReactNode; subtitle: string }) {
-  return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
-      <div className="mb-8 text-center">
-        <div className="mb-4 inline-flex items-center gap-2.5">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900 ring-2 ring-felt-700 ring-offset-2 ring-offset-paper">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cream text-sm font-black text-ink-900">
-              8
-            </span>
-          </span>
-          <span className="font-display text-3xl font-bold tracking-tight text-ink-900">poll</span>
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-dashed border-rail-strong bg-cream px-3.5 py-2.5">
+        <div className="text-xs text-ink-500">
+          Demo hesab: <span className="font-semibold text-ink-700">{DEMO.username}</span> /{' '}
+          <span className="font-semibold text-ink-700">{DEMO.password}</span>
         </div>
-        <p className="text-sm text-ink-500">{subtitle}</p>
+        <Button variant="ghost" size="sm" onClick={fillDemo}>
+          Doldur
+        </Button>
       </div>
-      <Card>{children}</Card>
-    </div>
+    </AuthShell>
   )
 }

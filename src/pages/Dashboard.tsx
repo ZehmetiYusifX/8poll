@@ -1,41 +1,73 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Avatar } from '../components/Avatar'
-import { Button, Card, Empty, PageLoader, Badge } from '../components/ui'
+import { Sparkline } from '../components/Sparkline'
+import { ActionCard } from '../components/ActionCard'
 import { MatchRow } from '../components/MatchRow'
 import { ReportMatchModal } from '../components/ReportMatchModal'
-import { ChallengeApi, MatchApi } from '../api'
+import {
+  Alert,
+  Button,
+  Card,
+  Empty,
+  ListSkeleton,
+  SectionHeader,
+  Skeleton,
+  buttonClass,
+  cx,
+} from '../components/ui'
+import {
+  IconArrowRight,
+  IconCheck,
+  IconPin,
+  IconPlus,
+  IconSwords,
+  IconTable,
+  IconTrophy,
+  IconUsers,
+  IconX,
+} from '../components/icons'
+import { useToast } from '../components/Toast'
+import { ChallengeApi, LeaderboardApi, MatchApi } from '../api'
 import { extractErrorMessage } from '../api/client'
 import type { Challenge, Match } from '../api/types'
 import { timeAgo } from '../utils/format'
 
 export function Dashboard() {
   const { user, refresh } = useAuth()
+  const toast = useToast()
+
   const [pending, setPending] = useState<Match[]>([])
   const [incoming, setIncoming] = useState<Challenge[]>([])
   const [mine, setMine] = useState<Match[]>([])
+  const [rank, setRank] = useState<{ place: number; total: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [report, setReport] = useState(false)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
+    if (!user) return
     try {
-      const [p, inc, m] = await Promise.all([
+      const [p, inc, m, board] = await Promise.all([
         MatchApi.pending(),
         ChallengeApi.incoming(),
         MatchApi.mine(),
+        LeaderboardApi.get(200).catch(() => []),
       ])
       setPending(p)
       setIncoming(inc.filter((c) => c.status === 'PENDING'))
       setMine(m)
+      const entry = board.find((e) => e.player.id === user.id)
+      setRank(entry ? { place: entry.rank, total: board.length } : null)
+      setError('')
     } catch (e) {
       setError(extractErrorMessage(e))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     load()
@@ -45,14 +77,37 @@ export function Dashboard() {
     await Promise.all([load(), refresh()])
   }
 
+  /** Təsdiqlənmiş maçlardan reytinq tarixçəsi — kiçik qrafik üçün */
+  const history = useMemo(() => {
+    if (!user) return []
+    return mine
+      .filter((m) => m.status === 'CONFIRMED' && m.confirmedAt)
+      .slice()
+      .sort((a, b) => Date.parse(a.confirmedAt!) - Date.parse(b.confirmedAt!))
+      .map((m) => (m.reporter.id === user.id ? m.reporterRatingAfter : m.opponentRatingAfter))
+      .filter((v): v is number => v != null)
+      .slice(-15)
+  }, [mine, user])
+
+  /** Son 5 nəticə — forma zolağı */
+  const form = useMemo(() => {
+    if (!user) return []
+    return mine
+      .filter((m) => m.status === 'CONFIRMED')
+      .slice(0, 5)
+      .map((m) => (m.winnerId == null ? 'draw' : m.winnerId === user.id ? 'win' : 'loss'))
+      .reverse()
+  }, [mine, user])
+
   const confirmMatch = async (id: number, ok: boolean) => {
     setBusyId(id)
     try {
       if (ok) await MatchApi.confirm(id)
       else await MatchApi.reject(id)
+      toast.success(ok ? 'Nəticə təsdiqləndi, reytinqlər yeniləndi' : 'Nəticə rədd edildi')
       await afterAction()
     } catch (e) {
-      setError(extractErrorMessage(e))
+      toast.error(extractErrorMessage(e))
     } finally {
       setBusyId(null)
     }
@@ -63,126 +118,256 @@ export function Dashboard() {
     try {
       if (ok) await ChallengeApi.accept(id)
       else await ChallengeApi.decline(id)
+      toast.success(ok ? 'Dəvət qəbul edildi' : 'Dəvətdən imtina edildi')
       await load()
     } catch (e) {
-      setError(extractErrorMessage(e))
+      toast.error(extractErrorMessage(e))
     } finally {
       setBusyId(null)
     }
   }
 
   if (!user) return null
-  if (loading) return <PageLoader />
 
-  const confirmedMine = mine.filter((m) => m.status === 'CONFIRMED').slice(0, 6)
+  const recent = mine.filter((m) => m.status === 'CONFIRMED').slice(0, 6)
+  const todoCount = pending.length + incoming.length
 
   return (
     <div className="space-y-8">
-      {/* Hero / stat kartı */}
-      <Card className="relative overflow-hidden border-l-4 border-l-felt-700">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      {/* ── Oyunçu kartı ─────────────────────────────────────── */}
+      <Card padded={false} className="overflow-hidden">
+        <div
+          className="relative flex flex-col gap-5 bg-felt-900 px-5 py-5 text-cream sm:flex-row sm:items-center sm:justify-between sm:px-6"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 4px)',
+          }}
+        >
           <div className="flex items-center gap-4">
-            <Avatar name={user.fullName} color={user.avatarColor} size={64} />
-            <div>
-              <p className="text-sm text-ink-500">Salam,</p>
-              <h1 className="text-2xl font-bold text-ink-900">{user.fullName}</h1>
-              <p className="text-sm text-ink-500">@{user.username}</p>
+            <Avatar name={user.fullName} color={user.avatarColor} size={60} ring="brass" />
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-[0.12em] text-felt-200/70">Xoş gəldiniz</p>
+              <h1 className="truncate font-display text-2xl font-semibold leading-tight">
+                {user.fullName}
+              </h1>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-felt-200/80">
+                <span>@{user.username}</span>
+                {loading ? (
+                  <Skeleton className="h-4 w-16 opacity-30" />
+                ) : (
+                  rank && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-wood-400/20 px-2 py-0.5 font-semibold text-wood-200">
+                      <IconTrophy size={11} />
+                      {rank.place}. yer / {rank.total}
+                    </span>
+                  )
+                )}
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-3 text-center sm:gap-5">
-            <Stat value={user.rating} label="Reytinq" accent />
-            <Stat value={user.wins} label="Qələbə" />
-            <Stat value={user.losses} label="Məğlub" />
-            <Stat value={`${user.winRate}%`} label="Qazanma" />
+
+          <div className="flex items-end gap-5">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">Reytinq</div>
+              <div className="font-display text-4xl font-bold leading-none tabular-nums text-wood-200">
+                {user.rating}
+              </div>
+              {form.length > 0 && (
+                <div className="mt-2 flex gap-1" title="Son nəticələr (köhnədən yeniyə)">
+                  {form.map((r, i) => (
+                    <span
+                      key={i}
+                      className={cx(
+                        'h-1.5 w-5 rounded-full',
+                        r === 'win' ? 'bg-felt-400' : r === 'loss' ? 'bg-clay-500' : 'bg-honey-600',
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            {history.length > 1 && <Sparkline values={history} className="hidden sm:block" />}
           </div>
         </div>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={() => setReport(true)}>+ Nəticə daxil et</Button>
-          <Link to="/players">
-            <Button variant="secondary">Oyunçu tap</Button>
+
+        <dl className="grid grid-cols-4 divide-x divide-rail border-b border-rail bg-card">
+          <HeroStat label="Oyun" value={user.gamesPlayed} />
+          <HeroStat label="Qələbə" value={user.wins} tone="win" />
+          <HeroStat label="Məğlub" value={user.losses} tone="loss" />
+          <HeroStat label="Qazanma" value={`${user.winRate}%`} />
+        </dl>
+
+        <div className="flex flex-wrap gap-2 bg-cream px-5 py-3">
+          <Button icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
+            Nəticə daxil et
+          </Button>
+          <Link to="/players" className={buttonClass('secondary', 'md')}>
+            <IconUsers size={16} />
+            Rəqib tap
           </Link>
-          <Link to="/leaderboard">
-            <Button variant="ghost">Reytinq cədvəli →</Button>
+          <Link to="/leaderboard" className={buttonClass('ghost', 'md', 'ml-auto')}>
+            Reytinq cədvəli
+            <IconArrowRight size={16} />
           </Link>
         </div>
       </Card>
 
-      {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      {error && <Alert tone="error">{error}</Alert>}
+
+      {/* ── Sizdən gözlənilir ────────────────────────────────── */}
+      {loading ? (
+        <ListSkeleton rows={3} />
+      ) : (
+        todoCount > 0 && (
+          <section>
+            <SectionHeader title="Sizdən gözlənilir" count={todoCount} />
+            <div className="space-y-3">
+              {pending.map((m) => (
+                <ActionCard
+                  key={`m${m.id}`}
+                  tone="confirm"
+                  badge={<IconCheck size={10} />}
+                  avatar={
+                    <Avatar name={m.reporter.fullName} color={m.reporter.avatarColor} size={42} />
+                  }
+                  title={
+                    <>
+                      <b className="font-semibold">{m.reporter.fullName}</b> nəticə daxil etdi
+                    </>
+                  }
+                  meta={
+                    <>
+                      <span className="font-semibold tabular-nums text-ink-700">
+                        {m.reporterScore} – {m.opponentScore}
+                      </span>
+                      <span aria-hidden>·</span>
+                      <span>{timeAgo(m.createdAt)}</span>
+                      {m.venue && (
+                        <>
+                          <span aria-hidden>·</span>
+                          <span className="inline-flex items-center gap-0.5">
+                            <IconPin size={12} />
+                            {m.venue.name}
+                          </span>
+                        </>
+                      )}
+                    </>
+                  }
+                  actions={
+                    <>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        icon={<IconCheck size={15} />}
+                        loading={busyId === m.id}
+                        onClick={() => confirmMatch(m.id, true)}
+                      >
+                        Təsdiqlə
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={<IconX size={15} />}
+                        disabled={busyId === m.id}
+                        onClick={() => confirmMatch(m.id, false)}
+                      >
+                        Rədd et
+                      </Button>
+                    </>
+                  }
+                />
+              ))}
+
+              {incoming.map((c) => (
+                <ActionCard
+                  key={`c${c.id}`}
+                  tone="challenge"
+                  badge={<IconSwords size={10} />}
+                  avatar={
+                    <Avatar name={c.challenger.fullName} color={c.challenger.avatarColor} size={42} />
+                  }
+                  title={
+                    <>
+                      <b className="font-semibold">{c.challenger.fullName}</b> sizi oyuna dəvət etdi
+                    </>
+                  }
+                  meta={
+                    <>
+                      <span>@{c.challenger.username}</span>
+                      <span aria-hidden>·</span>
+                      <span>{timeAgo(c.createdAt)}</span>
+                      {c.venue && (
+                        <>
+                          <span aria-hidden>·</span>
+                          <span className="inline-flex items-center gap-0.5">
+                            <IconPin size={12} />
+                            {c.venue.name}
+                          </span>
+                        </>
+                      )}
+                    </>
+                  }
+                  note={c.message}
+                  actions={
+                    <>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        icon={<IconCheck size={15} />}
+                        loading={busyId === c.id}
+                        onClick={() => respondChallenge(c.id, true)}
+                      >
+                        Qəbul et
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={busyId === c.id}
+                        onClick={() => respondChallenge(c.id, false)}
+                      >
+                        İmtina
+                      </Button>
+                    </>
+                  }
+                />
+              ))}
+            </div>
+          </section>
+        )
       )}
 
-      {/* Təsdiq gözləyən maçlar */}
-      {pending.length > 0 && (
-        <section>
-          <SectionTitle>Təsdiqinizi gözləyən nəticələr <Badge tone="yellow">{pending.length}</Badge></SectionTitle>
-          <div className="space-y-3">
-            {pending.map((m) => (
-              <Card key={m.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar name={m.reporter.fullName} color={m.reporter.avatarColor} size={40} />
-                  <div className="text-sm">
-                    <p className="text-ink-900">
-                      <b>{m.reporter.fullName}</b> nəticə daxil etdi
-                    </p>
-                    <p className="text-ink-500">
-                      {m.reporter.username} {m.reporterScore} : {m.opponentScore} {m.opponent.username}
-                      <span className="ml-2 text-ink-400">{timeAgo(m.createdAt)}</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="success" disabled={busyId === m.id} onClick={() => confirmMatch(m.id, true)}>
-                    Təsdiqlə
-                  </Button>
-                  <Button variant="danger" disabled={busyId === m.id} onClick={() => confirmMatch(m.id, false)}>
-                    Rədd et
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Gələn dəvətlər */}
-      {incoming.length > 0 && (
-        <section>
-          <SectionTitle>Yeni dəvətlər <Badge tone="green">{incoming.length}</Badge></SectionTitle>
-          <div className="space-y-3">
-            {incoming.map((c) => (
-              <Card key={c.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar name={c.challenger.fullName} color={c.challenger.avatarColor} size={40} />
-                  <div className="text-sm">
-                    <p className="text-ink-900"><b>{c.challenger.fullName}</b> sizi dəvət etdi</p>
-                    {c.message && <p className="text-ink-500">“{c.message}”</p>}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="success" disabled={busyId === c.id} onClick={() => respondChallenge(c.id, true)}>
-                    Qəbul et
-                  </Button>
-                  <Button variant="secondary" disabled={busyId === c.id} onClick={() => respondChallenge(c.id, false)}>
-                    İmtina
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Son maçlar */}
+      {/* ── Son maçlar ───────────────────────────────────────── */}
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <SectionTitle>Son maçlarınız</SectionTitle>
-          <Link to="/matches" className="text-sm text-felt-700 hover:text-felt-800">Hamısı →</Link>
-        </div>
-        {confirmedMine.length === 0 ? (
-          <Empty title="Hələ təsdiqlənmiş maç yoxdur" hint="İlk nəticənizi daxil edin və reytinq toplamağa başlayın." />
+        <SectionHeader
+          title="Son maçlarınız"
+          action={
+            recent.length > 0 && (
+              <Link
+                to="/matches"
+                className="inline-flex items-center gap-1 text-sm font-medium text-felt-700 underline-offset-4 hover:underline"
+              >
+                Hamısı
+                <IconArrowRight size={15} />
+              </Link>
+            )
+          }
+        />
+        {loading ? (
+          <ListSkeleton rows={4} />
+        ) : recent.length === 0 ? (
+          <Empty
+            icon={<IconTable size={20} />}
+            title="Hələ təsdiqlənmiş maçınız yoxdur"
+            hint="İlk nəticənizi daxil edin — rəqibiniz təsdiqlədikdən sonra Elo reytinqiniz hesablanacaq."
+            action={
+              <Button icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
+                Nəticə daxil et
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-2.5">
-            {confirmedMine.map((m) => (
+            {recent.map((m) => (
               <MatchRow key={m.id} match={m} viewerId={user.id} />
             ))}
           </div>
@@ -194,15 +379,30 @@ export function Dashboard() {
   )
 }
 
-function Stat({ value, label, accent }: { value: number | string; label: string; accent?: boolean }) {
+function HeroStat({
+  label,
+  value,
+  tone = 'default',
+}: {
+  label: string
+  value: number | string
+  tone?: 'default' | 'win' | 'loss'
+}) {
   return (
-    <div>
-      <div className={`text-2xl font-black tabular-nums ${accent ? 'text-felt-700' : 'text-ink-900'}`}>{value}</div>
-      <div className="text-xs text-ink-500">{label}</div>
+    <div className="px-2 py-3.5 text-center">
+      <dd
+        className={cx(
+          'font-display text-xl font-semibold tabular-nums sm:text-2xl',
+          tone === 'win' && 'text-felt-700',
+          tone === 'loss' && 'text-clay-700',
+          tone === 'default' && 'text-ink-900',
+        )}
+      >
+        {value}
+      </dd>
+      <dt className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.07em] text-ink-400">
+        {label}
+      </dt>
     </div>
   )
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-ink-900">{children}</h2>
 }
