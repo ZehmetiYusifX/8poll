@@ -166,17 +166,17 @@ export function TournamentDetail() {
       {error && <Alert tone="error" className="mb-5">{error}</Alert>}
 
       {t.status === 'COMPLETED' && t.winner && (
-        <Card className="mb-6 flex items-center gap-4 border-wood-300 bg-wood-50">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-wood-400 text-white">
+        <Card className="surface-gold mb-6 flex items-center gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gold-400 text-felt-950">
             <IconTrophy size={24} />
           </span>
           <div className="min-w-0">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-wood-600">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gold-300">
               Turnir qalibi
             </div>
             <Link
               to={`/players/${t.winner.id}`}
-              className="font-display text-xl font-semibold text-ink-950 hover:text-felt-700"
+              className="font-display text-xl font-semibold text-ink-950 hover:text-felt-300"
             >
               {t.winner.fullName}
             </Link>
@@ -221,7 +221,7 @@ export function TournamentDetail() {
                       className={cx(
                         'flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs transition-colors',
                         p.id === user?.id
-                          ? 'border-felt-300 bg-felt-50'
+                          ? 'border-felt-500/40 bg-felt-500/12'
                           : 'border-rail hover:border-rail-strong',
                       )}
                     >
@@ -235,7 +235,7 @@ export function TournamentDetail() {
                         </span>
                         <span className="block truncate text-xs text-ink-400">@{p.username}</span>
                       </span>
-                      <span className="shrink-0 font-display text-sm font-semibold tabular-nums text-felt-700">
+                      <span className="shrink-0 font-display text-sm font-semibold tabular-nums text-felt-300">
                         {p.rating}
                       </span>
                     </Link>
@@ -256,7 +256,7 @@ export function TournamentDetail() {
                   i < rounds.length - 1 && 'border-r border-dashed border-rail pr-4',
                 )}
               >
-                <div className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-wood-600">
+                <div className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-gold-300">
                   {roundName(i + 1)}
                 </div>
                 <div className="flex flex-1 flex-col justify-around gap-3">
@@ -317,7 +317,7 @@ function BracketCard({
       <div
         className={cx(
           'flex items-center gap-2 px-3 py-2',
-          isWinner && 'bg-felt-50',
+          isWinner && 'bg-felt-500/12',
           !player && 'text-ink-300',
         )}
       >
@@ -331,9 +331,9 @@ function BracketCard({
               )}
             >
               {player.fullName}
-              {isMe && <span className="ml-1 text-[10px] font-bold uppercase text-felt-600">siz</span>}
+              {isMe && <span className="ml-1 text-[10px] font-bold uppercase text-felt-400">siz</span>}
             </span>
-            {isWinner && <IconCheck size={13} className="shrink-0 text-felt-600" />}
+            {isWinner && <IconCheck size={13} className="shrink-0 text-felt-400" />}
           </>
         ) : (
           <span className="flex-1 truncate text-sm italic">{isBye ? 'Bay' : 'Gözlənilir'}</span>
@@ -355,7 +355,7 @@ function BracketCard({
       <div
         className={cx(
           'overflow-hidden rounded-lg border bg-card shadow-xs',
-          match.status === 'READY' ? 'border-honey-200' : 'border-rail',
+          match.status === 'READY' ? 'border-honey-500/30' : 'border-rail',
         )}
       >
         <div className="divide-y divide-rail">

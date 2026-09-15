@@ -1,5 +1,5 @@
 import { mediaUrl } from '../api/client'
-import { IconEightBall } from './icons'
+import { EloabfMark } from './icons'
 import { cx } from './ui'
 
 /**
@@ -26,21 +26,21 @@ export function VenuePhoto({
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={cx('h-full w-full bg-wood-100 object-cover', rounded, className)}
+        className={cx('h-full w-full bg-gold-400/12 object-cover', rounded, className)}
       />
     )
   }
 
   return (
     <div
-      className={cx('flex h-full w-full items-center justify-center bg-felt-800', rounded, className)}
-      style={{
-        backgroundImage:
-          'repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 3px, transparent 3px 6px)',
-      }}
+      className={cx(
+        'felt-weave flex h-full w-full items-center justify-center bg-felt-900',
+        rounded,
+        className,
+      )}
       aria-hidden
     >
-      <IconEightBall size={40} className="text-ink-950/70" />
+      <EloabfMark size={40} plate={false} className="opacity-45" />
     </div>
   )
 }

@@ -293,3 +293,51 @@ export function IconEightBall({ size = 20, className = '' }: { size?: number; cl
     </svg>
   )
 }
+
+/*
+ * Eloabf brend nişanı — brendbukdakı loqo: ağ lövhə üzərində altı topdan
+ * ibarət piramida. Loqo hekayəsi: rəngli toplar oyunçu səviyyələrini və
+ * bütün bilyard intizamlarını, mərkəzdəki 8 topu isə hədəfi və ölçülmüş
+ * nəticəni bildirir.
+ *
+ * `plate={false}` variantı lövhəsiz, yalnız topları verir — artıq tünd
+ * səth üzərində (məsələn footer, yükləyici) daha yaxşı oturur.
+ */
+const RACK = [
+  { cx: 32, cy: 20.6, fill: 'var(--color-ball-orange)' },
+  { cx: 25.4, cy: 32.1, fill: 'var(--color-ball-red)' },
+  { cx: 38.6, cy: 32.1, fill: 'var(--color-ball-green)' },
+  { cx: 18.8, cy: 43.5, fill: 'var(--color-ball-blue)' },
+  { cx: 45.2, cy: 43.5, fill: 'var(--color-ball-purple)' },
+]
+
+export function EloabfMark({
+  size = 32,
+  plate = true,
+  className = '',
+}: {
+  size?: number
+  /** Loqonun ağ fon lövhəsi. Kiçik ölçülərdə tanınmanı artırır. */
+  plate?: boolean
+  className?: string
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 64 64"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {plate && <rect x="2" y="2" width="60" height="60" rx="15" fill="#fff" />}
+      {RACK.map((ball) => (
+        <circle key={ball.cx} cx={ball.cx} cy={ball.cy} r="6" fill={ball.fill} />
+      ))}
+      <circle cx="32" cy="43.5" r="6" fill="var(--color-ball-eight)" />
+      <circle cx="32" cy="43.5" r="3.4" fill="#f2f2f2" />
+      <circle cx="32" cy="43.5" r="2.1" fill="var(--color-ball-eight)" />
+    </svg>
+  )
+}

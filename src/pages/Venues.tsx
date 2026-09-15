@@ -81,7 +81,7 @@ export function Venues() {
                     className="transition-transform duration-500 group-hover:scale-[1.04]"
                   />
                   {v.photoUrls.length > 1 && (
-                    <span className="absolute right-2 top-2 rounded-full bg-ink-950/55 px-2 py-0.5 text-[11px] font-medium text-cream backdrop-blur-sm">
+                    <span className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-medium text-ivory backdrop-blur-sm">
                       {v.photoUrls.length} şəkil
                     </span>
                   )}

@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import { IconCheck, IconEightBall } from './icons'
-import { BrassRule } from './ui'
+import { BrandLink, BrandLogo, SLOGAN } from './Brand'
+import { IconCheck } from './icons'
+import { GoldRule } from './ui'
 
 /**
  * Giriş / qeydiyyat səhifələrinin ümumi karkası.
- * Böyük ekranlarda solda mahud yaşılı təqdimat paneli, sağda forma.
+ * Böyük ekranlarda solda klub atmosferli təqdimat paneli, sağda forma.
  */
 export function AuthShell({
   title,
@@ -25,16 +25,13 @@ export function AuthShell({
       <div className="flex flex-col justify-center px-5 py-10 sm:px-10 lg:px-14">
         <div className="mx-auto w-full max-w-md">
           {/* Kiçik ekranlarda brend başlıqda görünür */}
-          <Link to="/" className="mb-8 inline-flex items-center gap-2.5 lg:hidden">
-            <IconEightBall size={30} className="text-ink-950" />
-            <span className="font-display text-2xl font-bold leading-none tracking-tight text-ink-950">
-              poll
-            </span>
-          </Link>
+          <BrandLink size={32} className="mb-8 block lg:hidden" />
 
-          <h1 className="font-display text-[28px] font-semibold leading-tight text-ink-950">{title}</h1>
+          <h1 className="font-display text-[28px] font-bold leading-tight tracking-[-0.01em] text-ink-950">
+            {title}
+          </h1>
           <p className="mt-1.5 text-sm text-ink-500">{subtitle}</p>
-          <BrassRule className="my-6" />
+          <GoldRule className="my-6" />
 
           {children}
 
@@ -51,42 +48,45 @@ const HIGHLIGHTS = [
   'Klubların turnirlərinə qoşul, cədvəldə irəlilə',
 ]
 
+/**
+ * Brendbukun foto istiqaməti: aşağı işıqlı klub zalı, kənarlar qaranlıq,
+ * fokus masadadır. Mətn oxunsun deyə şəklin üstünə tünd qradient qoyulur.
+ */
 function MarketingPanel() {
   return (
-    <aside
-      className="relative hidden flex-col justify-between overflow-hidden bg-felt-900 p-12 text-cream lg:flex"
-      style={{
-        backgroundImage:
-          'repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 4px)',
-      }}
-    >
-      {/* Küncdən düşən işıq */}
+    <aside className="relative hidden flex-col justify-between overflow-hidden bg-felt-950 p-12 text-ivory lg:flex">
+      <img
+        src="/brand/club-room.jpg"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-cover"
+      />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(70% 55% at 25% 0%, rgba(255,255,255,0.10) 0%, transparent 65%)',
+            'linear-gradient(105deg, rgba(10,10,10,0.94) 0%, rgba(10,10,10,0.76) 45%, rgba(14,42,26,0.5) 100%)',
         }}
       />
 
       <div className="relative">
-        <Link to="/" className="inline-flex items-center gap-3">
-          <IconEightBall size={38} className="text-ink-950" />
-          <span className="font-display text-3xl font-bold leading-none tracking-tight">poll</span>
-        </Link>
+        <BrandLink size={40} />
       </div>
 
       <div className="relative max-w-md">
-        <p className="font-display text-[34px] font-semibold leading-[1.15]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-400">
+          {SLOGAN}
+        </p>
+        <p className="mt-4 font-display text-[36px] font-bold leading-[1.1] tracking-[-0.02em]">
           Hər partiya
           <br />
           reytinqə yazılır.
         </p>
         <ul className="mt-8 space-y-3.5">
           {HIGHLIGHTS.map((text) => (
-            <li key={text} className="flex items-start gap-3 text-[15px] leading-snug text-felt-100/85">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-wood-400/25 text-wood-200">
+            <li key={text} className="flex items-start gap-3 text-[15px] leading-snug text-ink-800">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold-400/20 text-gold-400">
                 <IconCheck size={13} />
               </span>
               {text}
@@ -96,58 +96,19 @@ function MarketingPanel() {
       </div>
 
       <div className="relative flex items-end justify-between gap-6">
-        <p className="text-xs text-felt-200/70">8poll · Həvəskar bilyard reytinq platforması</p>
-        <BallRack />
+        <p className="text-xs text-ink-500">Bilyard reytinq və turnir platforması</p>
+        <BrandLogo size={30} wordmark={false} className="opacity-90" />
       </div>
 
-      {/* Sağ kənarda qoz ağacı rail */}
+      {/* Sağ kənarda qızıl rail */}
       <div
         aria-hidden
-        className="absolute inset-y-0 right-0 w-[3px]"
+        className="absolute inset-y-0 right-0 w-[2px]"
         style={{
           backgroundImage:
-            'linear-gradient(180deg, #513826 0%, #8a6239 20%, #bd9663 50%, #8a6239 80%, #513826 100%)',
+            'linear-gradient(180deg, #3a2c15 0%, #866731 20%, #d7b56d 50%, #866731 80%, #3a2c15 100%)',
         }}
       />
     </aside>
-  )
-}
-
-/** Dekorativ top piramidası — səhifəyə "klub" hissi verir */
-function BallRack() {
-  const rows = [
-    [{ n: 1, c: '#c8a11e' }],
-    [
-      { n: 8, c: '#171b14' },
-      { n: 3, c: '#932b21' },
-    ],
-    [
-      { n: 6, c: '#0f6b6b' },
-      { n: 2, c: '#3d5a6d' },
-      { n: 5, c: '#a1543a' },
-    ],
-  ]
-
-  return (
-    <div aria-hidden className="flex shrink-0 flex-col items-center gap-1 opacity-80">
-      {rows.map((row, i) => (
-        <div key={i} className="flex gap-1">
-          {row.map((ball) => (
-            <span
-              key={ball.n}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold text-cream shadow-sm"
-              style={{
-                backgroundColor: ball.c,
-                boxShadow: 'inset 0 2px 3px rgba(255,255,255,0.25), inset 0 -2px 3px rgba(0,0,0,0.3)',
-              }}
-            >
-              <span className="flex h-3 w-3 items-center justify-center rounded-full bg-cream text-[8px] text-ink-950">
-                {ball.n}
-              </span>
-            </span>
-          ))}
-        </div>
-      ))}
-    </div>
   )
 }

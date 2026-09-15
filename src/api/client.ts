@@ -1,14 +1,26 @@
 import axios from 'axios'
 
-const TOKEN_KEY = '8poll_token'
+const TOKEN_KEY = 'eloabf_token'
+/* Brend dəyişikliyindən əvvəlki açar — köçürüldükdən sonra silinə bilər */
+const LEGACY_TOKEN_KEY = '8poll_token'
 
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  const token = localStorage.getItem(TOKEN_KEY)
+  if (token) return token
+
+  // Köhnə açarla girmiş istifadəçilər rebrenddən sonra çıxış etmiş olmasın
+  const legacy = localStorage.getItem(LEGACY_TOKEN_KEY)
+  if (legacy) {
+    localStorage.setItem(TOKEN_KEY, legacy)
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
+  }
+  return legacy
 }
 
 export function setToken(token: string | null) {
   if (token) localStorage.setItem(TOKEN_KEY, token)
   else localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(LEGACY_TOKEN_KEY)
 }
 
 // VITE_API_URL verilmese, Vite proxy vasitesile /api istifade olunur

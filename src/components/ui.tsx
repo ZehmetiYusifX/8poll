@@ -10,7 +10,7 @@ import {
   IconAlert,
   IconCheck,
   IconChevronDown,
-  IconEightBall,
+  EloabfMark,
   IconEye,
   IconEyeOff,
   IconInfo,
@@ -25,17 +25,21 @@ export function cx(...parts: Array<string | false | 0 | null | undefined>): stri
    Button
    ═══════════════════════════════════════════════════════════════ */
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'brass'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'gold'
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
+/*
+ * Tünd fonda hover işığa doğru getməlidir — açıq interfeysdəki kimi
+ * tündləşsə, düymə səthdən geri çəkilmiş kimi görünür.
+ */
 const variantClass: Record<ButtonVariant, string> = {
-  primary: 'bg-felt-700 text-cream shadow-xs hover:bg-felt-800 focus-visible:outline-felt-800',
-  secondary:
-    'bg-card text-ink-800 border border-rail-strong shadow-xs hover:bg-cream hover:border-wood-300',
-  ghost: 'text-ink-600 hover:bg-wood-100 hover:text-ink-900',
-  danger: 'bg-clay-700 text-white shadow-xs hover:bg-clay-800 focus-visible:outline-clay-800',
-  success: 'bg-felt-600 text-cream shadow-xs hover:bg-felt-700',
-  brass: 'bg-wood-500 text-white shadow-xs hover:bg-wood-600',
+  primary: 'bg-felt-700 text-ivory shadow-sm edge-light hover:bg-felt-600',
+  secondary: 'bg-card text-ink-800 border border-rail-strong shadow-xs hover:border-gold-400/45 hover:text-ink-950',
+  ghost: 'text-ink-600 hover:bg-gold-400/10 hover:text-ink-950',
+  danger: 'bg-clay-600 text-ivory shadow-sm edge-light hover:bg-clay-500',
+  success: 'bg-felt-600 text-ivory shadow-sm edge-light hover:bg-felt-500',
+  /* Qızıl düymə — qalib/premium hərəkətlər. Fon açıq olduğu üçün mətn tünddür. */
+  gold: 'bg-gold-400 text-felt-950 shadow-sm hover:bg-gold-300',
 }
 
 const sizeClass: Record<ButtonSize, string> = {
@@ -127,10 +131,10 @@ export function Card({
   return (
     <div
       className={cx(
-        'rounded-xl border border-rail bg-card shadow-sm',
+        'rounded-xl border border-rail bg-card shadow-sm edge-light',
         padded && 'p-5',
         interactive &&
-          'transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-rail-strong hover:shadow-md',
+          'transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-gold-400/35 hover:shadow-md',
         className,
       )}
     >
@@ -139,9 +143,9 @@ export function Card({
   )
 }
 
-/** İncə mis xətt — başlıqların altında istifadə olunur */
-export function BrassRule({ className = '' }: { className?: string }) {
-  return <div className={cx('rule-brass h-px w-full', className)} aria-hidden />
+/** İncə qızıl xətt — başlıqların altında istifadə olunur */
+export function GoldRule({ className = '' }: { className?: string }) {
+  return <div className={cx('rule-gold h-px w-full', className)} aria-hidden />
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -151,16 +155,17 @@ export function BrassRule({ className = '' }: { className?: string }) {
 type FieldContext = { id: string; describedBy?: string; invalid: boolean }
 const FieldCtx = createContext<FieldContext | null>(null)
 
+/* Çökək səth: tünd fonda daxili kölgə qara olmalıdır, isti-boz deyil */
 const controlBase =
   'w-full rounded-lg border bg-cream text-sm text-ink-900 outline-none ' +
-  'shadow-[inset_0_1px_1px_rgba(52,40,22,0.04)] ' +
+  'shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] ' +
   'transition-[border-color,box-shadow] duration-150 ' +
   'disabled:cursor-not-allowed disabled:opacity-60'
 
 const controlTone = (invalid: boolean) =>
   invalid
-    ? 'border-clay-500 focus:border-clay-600 focus:ring-4 focus:ring-clay-500/15'
-    : 'border-rail-strong hover:border-wood-300 focus:border-felt-600 focus:ring-4 focus:ring-felt-600/12'
+    ? 'border-clay-500 focus:border-clay-400 focus:ring-4 focus:ring-clay-500/20'
+    : 'border-rail-strong hover:border-gold-400/40 focus:border-gold-400 focus:ring-4 focus:ring-gold-400/15'
 
 /** Field içindəki idarəçilər üçün id/aria dəyərlərini götürür */
 function useControlProps(invalidProp?: boolean) {
@@ -220,7 +225,7 @@ export function PasswordInput({
         type="button"
         onClick={() => setShow((v) => !v)}
         aria-label={show ? 'Şifrəni gizlət' : 'Şifrəni göstər'}
-        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-2 text-ink-400 transition-colors hover:bg-wood-100 hover:text-ink-700"
+        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-2 text-ink-400 transition-colors hover:bg-gold-400/12 hover:text-ink-700"
       >
         {show ? <IconEyeOff size={16} /> : <IconEye size={16} />}
       </button>
@@ -315,7 +320,7 @@ export function Field({
         </Label>
         {children}
         {hasMsg && (
-          <p id={msgId} className={cx('mt-1.5 text-xs', error ? 'text-clay-700' : 'text-ink-400')}>
+          <p id={msgId} className={cx('mt-1.5 text-xs', error ? 'text-clay-300' : 'text-ink-400')}>
             {error || hint}
           </p>
         )}
@@ -331,9 +336,9 @@ export function Field({
 type AlertTone = 'error' | 'success' | 'info'
 
 const alertTone: Record<AlertTone, { box: string; icon: ReactNode }> = {
-  error: { box: 'border-clay-200 bg-clay-50 text-clay-800', icon: <IconAlert size={16} /> },
-  success: { box: 'border-felt-200 bg-felt-50 text-felt-800', icon: <IconCheck size={16} /> },
-  info: { box: 'border-steel-200 bg-steel-50 text-steel-800', icon: <IconInfo size={16} /> },
+  error: { box: 'border-clay-500/30 bg-clay-500/12 text-clay-300', icon: <IconAlert size={16} /> },
+  success: { box: 'border-felt-500/30 bg-felt-500/12 text-felt-300', icon: <IconCheck size={16} /> },
+  info: { box: 'border-steel-500/30 bg-steel-500/14 text-steel-300', icon: <IconInfo size={16} /> },
 }
 
 export function Alert({
@@ -372,15 +377,15 @@ export function ErrorText({ children }: { children: ReactNode }) {
    Nişanlar
    ═══════════════════════════════════════════════════════════════ */
 
-export type BadgeTone = 'neutral' | 'green' | 'red' | 'yellow' | 'blue' | 'brass'
+export type BadgeTone = 'neutral' | 'green' | 'red' | 'yellow' | 'blue' | 'gold'
 
 const badgeTones: Record<BadgeTone, string> = {
-  neutral: 'border-rail-strong bg-wood-50 text-ink-600',
-  green: 'border-felt-200 bg-felt-50 text-felt-800',
-  red: 'border-clay-200 bg-clay-50 text-clay-800',
-  yellow: 'border-honey-200 bg-honey-50 text-honey-800',
-  blue: 'border-steel-200 bg-steel-50 text-steel-800',
-  brass: 'border-wood-300 bg-wood-50 text-wood-700',
+  neutral: 'border-rail-strong bg-cream text-ink-600',
+  green: 'border-felt-500/30 bg-felt-500/12 text-felt-300',
+  red: 'border-clay-500/30 bg-clay-500/12 text-clay-300',
+  yellow: 'border-honey-500/30 bg-honey-500/14 text-honey-300',
+  blue: 'border-steel-500/30 bg-steel-500/14 text-steel-300',
+  gold: 'border-gold-400/40 bg-gold-400/8 text-gold-300',
 }
 
 export function Badge({
@@ -434,7 +439,7 @@ export function Spinner({ className = '' }: { className?: string }) {
       role="status"
       aria-label="Yüklənir"
       className={cx(
-        'inline-block h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-felt-200 border-t-felt-700',
+        'inline-block h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-rail-strong border-t-gold-400',
         className,
       )}
     />
@@ -467,7 +472,7 @@ export function ListSkeleton({ rows = 5, className = '' }: { rows?: number; clas
 export function BootLoader() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4" role="status">
-      <IconEightBall size={44} className="animate-pulse text-ink-950" />
+      <EloabfMark size={48} className="animate-pulse" />
       <span className="sr-only">Yüklənir</span>
       <Skeleton className="h-1 w-24 rounded-full" />
     </div>
@@ -506,7 +511,7 @@ export function PageHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           {eyebrow && (
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-wood-600">
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-300">
               {eyebrow}
             </div>
           )}
@@ -517,7 +522,7 @@ export function PageHeader({
         </div>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      <BrassRule className="mt-4" />
+      <GoldRule className="mt-4" />
     </header>
   )
 }
@@ -538,7 +543,7 @@ export function SectionHeader({
       <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900">
         {title}
         {count != null && count > 0 && (
-          <span className="rounded-full bg-wood-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-wood-700">
+          <span className="rounded-full bg-gold-400/12 px-2 py-0.5 text-xs font-semibold tabular-nums text-gold-300">
             {count}
           </span>
         )}
@@ -562,7 +567,7 @@ export function Empty({
   return (
     <div className="rounded-xl border border-dashed border-rail-strong bg-card/50 px-6 py-14 text-center">
       {icon && (
-        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-wood-100 text-wood-600">
+        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-gold-400/12 text-gold-300">
           {icon}
         </div>
       )}
@@ -590,9 +595,9 @@ export function Stat({
 }) {
   const toneClass = {
     default: 'text-ink-900',
-    accent: 'text-felt-700',
-    win: 'text-felt-700',
-    loss: 'text-clay-700',
+    accent: 'text-felt-300',
+    win: 'text-felt-300',
+    loss: 'text-clay-300',
   }[tone]
 
   return (
@@ -645,15 +650,15 @@ export function Segmented<T extends string>({
             className={cx(
               'flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors duration-150',
               active
-                ? 'bg-felt-700 text-cream shadow-xs'
-                : 'text-ink-600 hover:bg-wood-100 hover:text-ink-900',
+                ? 'bg-felt-700 text-ivory shadow-xs'
+                : 'text-ink-600 hover:bg-gold-400/12 hover:text-ink-900',
             )}
           >
             {item.label}
             {item.count != null && item.count > 0 && (
               <Count
                 value={item.count}
-                className={active ? 'bg-cream/25 text-cream' : 'bg-wood-200 text-wood-700'}
+                className={active ? 'bg-cream/25 text-ivory' : 'bg-gold-400/20 text-gold-300'}
               />
             )}
           </button>

@@ -82,7 +82,7 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <div
-        className="absolute inset-0 bg-ink-950/45 backdrop-blur-[2px] animate-fade-in"
+        className="absolute inset-0 bg-black/70 backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
         aria-hidden
       />
@@ -117,7 +117,7 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
             type="button"
             onClick={onClose}
             aria-label="Bağla"
-            className="-mr-1.5 -mt-0.5 rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-wood-100 hover:text-ink-900"
+            className="-mr-1.5 -mt-0.5 rounded-lg p-1.5 text-ink-400 transition-colors hover:bg-gold-400/12 hover:text-ink-900"
           >
             <IconX size={18} />
           </button>

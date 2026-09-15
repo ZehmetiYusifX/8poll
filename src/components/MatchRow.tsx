@@ -54,7 +54,7 @@ export function MatchRow({ match, viewerId, showVenue = true }: Props) {
       <div className="min-w-0 flex-1">
         <Link
           to={`/players/${other.id}`}
-          className="block truncate font-medium text-ink-900 transition-colors hover:text-felt-700"
+          className="block truncate font-medium text-ink-900 transition-colors hover:text-felt-300"
         >
           {other.fullName}
         </Link>
@@ -78,8 +78,8 @@ export function MatchRow({ match, viewerId, showVenue = true }: Props) {
         <div
           className={cx(
             'font-display text-lg font-semibold tabular-nums',
-            settled && outcome === 'win' && 'text-felt-700',
-            settled && outcome === 'loss' && 'text-clay-700',
+            settled && outcome === 'win' && 'text-felt-300',
+            settled && outcome === 'loss' && 'text-clay-300',
             (!settled || outcome === 'draw') && 'text-ink-700',
           )}
         >
@@ -110,7 +110,7 @@ export function RatingDelta({ value, className = '' }: { value: number; classNam
       className={cx(
         'inline-flex min-w-[3.25rem] items-center justify-center gap-0.5 rounded-md px-1.5 py-1',
         'text-xs font-bold tabular-nums',
-        up ? 'bg-felt-50 text-felt-700' : 'bg-clay-50 text-clay-700',
+        up ? 'bg-felt-500/12 text-felt-300' : 'bg-clay-500/12 text-clay-300',
         className,
       )}
       title={`Reytinq dəyişikliyi: ${signed(value)}`}

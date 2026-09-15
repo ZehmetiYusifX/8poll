@@ -46,13 +46,13 @@ export function Login() {
         <>
           <p>
             Hesabınız yoxdur?{' '}
-            <Link to="/register" className="font-semibold text-felt-700 underline-offset-4 hover:underline">
+            <Link to="/register" className="font-semibold text-felt-300 underline-offset-4 hover:underline">
               Qeydiyyatdan keçin
             </Link>
           </p>
           <p>
             Məkan sahibisiniz?{' '}
-            <Link to="/venues/register" className="font-semibold text-felt-700 underline-offset-4 hover:underline">
+            <Link to="/venues/register" className="font-semibold text-felt-300 underline-offset-4 hover:underline">
               Klub hesabı açın
             </Link>
           </p>

@@ -48,7 +48,7 @@ export function ActionCard({
             {badge && (
               <span
                 className={cx(
-                  'absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full text-cream ring-2 ring-card',
+                  'absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full text-ivory ring-2 ring-card',
                   badgeBg[tone],
                 )}
               >

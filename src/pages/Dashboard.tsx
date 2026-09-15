@@ -136,15 +136,28 @@ export function Dashboard() {
     <div className="space-y-8">
       {/* ── Oyunçu kartı ─────────────────────────────────────── */}
       <Card padded={false} className="overflow-hidden">
-        <div
-          className="relative flex flex-col gap-5 bg-felt-900 px-5 py-5 text-cream sm:flex-row sm:items-center sm:justify-between sm:px-6"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 4px)',
-          }}
-        >
-          <div className="flex items-center gap-4">
-            <Avatar name={user.fullName} color={user.avatarColor} size={60} ring="brass" />
+        {/*
+          Oyunçu kartı brendbukun "premium klub" kadrıdır: arxa planda aşağı
+          işıqlı masa fotosu, üstündə tünd qradient ki, mətn oxunaqlı qalsın.
+        */}
+        <div className="felt-weave relative flex flex-col gap-5 bg-felt-950 px-5 py-5 text-ivory sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <img
+            src="/brand/table-lamp.jpg"
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover object-right opacity-55"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.82) 40%, rgba(14,42,26,0.62) 100%)',
+            }}
+          />
+
+          <div className="relative flex items-center gap-4">
+            <Avatar name={user.fullName} color={user.avatarColor} size={60} ring="gold" />
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.12em] text-felt-200/70">Xoş gəldiniz</p>
               <h1 className="truncate font-display text-2xl font-semibold leading-tight">
@@ -156,7 +169,7 @@ export function Dashboard() {
                   <Skeleton className="h-4 w-16 opacity-30" />
                 ) : (
                   rank && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-wood-400/20 px-2 py-0.5 font-semibold text-wood-200">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gold-400/20 px-2 py-0.5 font-semibold text-gold-200">
                       <IconTrophy size={11} />
                       {rank.place}. yer / {rank.total}
                     </span>
@@ -166,10 +179,10 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-end gap-5">
+          <div className="relative flex items-end gap-5">
             <div>
               <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">Reytinq</div>
-              <div className="font-display text-4xl font-bold leading-none tabular-nums text-wood-200">
+              <div className="font-display text-4xl font-bold leading-none tabular-nums text-gold-400">
                 {user.rating}
               </div>
               {form.length > 0 && (
@@ -344,7 +357,7 @@ export function Dashboard() {
             recent.length > 0 && (
               <Link
                 to="/matches"
-                className="inline-flex items-center gap-1 text-sm font-medium text-felt-700 underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1 text-sm font-medium text-felt-300 underline-offset-4 hover:underline"
               >
                 Hamısı
                 <IconArrowRight size={15} />
@@ -393,8 +406,8 @@ function HeroStat({
       <dd
         className={cx(
           'font-display text-xl font-semibold tabular-nums sm:text-2xl',
-          tone === 'win' && 'text-felt-700',
-          tone === 'loss' && 'text-clay-700',
+          tone === 'win' && 'text-felt-300',
+          tone === 'loss' && 'text-clay-300',
           tone === 'default' && 'text-ink-900',
         )}
       >

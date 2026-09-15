@@ -6,14 +6,14 @@ interface Props {
   color?: string | null
   size?: number
   /** Tünd fonlarda (header) kontrast üçün nazik halqa */
-  ring?: 'none' | 'light' | 'brass'
+  ring?: 'none' | 'light' | 'gold'
   className?: string
 }
 
 const ringClass = {
   none: '',
-  light: 'ring-2 ring-cream/85',
-  brass: 'ring-2 ring-wood-300',
+  light: 'ring-2 ring-white/30',
+  gold: 'ring-2 ring-gold-400/40',
 }
 
 export function Avatar({ name, color, size = 40, ring = 'none', className = '' }: Props) {

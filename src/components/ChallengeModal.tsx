@@ -71,12 +71,12 @@ export function ChallengeModal({ opponent, open, onClose, onDone }: Props) {
 
       {done ? (
         <div className="space-y-4">
-          <div className="rounded-xl border border-felt-200 bg-felt-50 p-5 text-center">
-            <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-felt-600 text-cream">
+          <div className="rounded-xl border border-felt-500/30 bg-felt-500/12 p-5 text-center">
+            <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-felt-600 text-ivory">
               <IconCheck size={22} />
             </span>
-            <p className="font-medium text-felt-800">Dəvət göndərildi</p>
-            <p className="mt-1 text-sm text-felt-700/80">
+            <p className="font-medium text-felt-300">Dəvət göndərildi</p>
+            <p className="mt-1 text-sm text-felt-300/80">
               <b>{opponent.username}</b> cavab verdikdə Dəvətlər bölməsində görəcəksiniz.
             </p>
           </div>
@@ -114,7 +114,7 @@ export function ChallengeModal({ opponent, open, onClose, onDone }: Props) {
                 key={m}
                 type="button"
                 onClick={() => setMessage(m)}
-                className="rounded-full border border-rail-strong bg-cream px-2.5 py-1 text-xs text-ink-600 transition-colors hover:border-felt-300 hover:bg-felt-50 hover:text-felt-800"
+                className="rounded-full border border-rail-strong bg-cream px-2.5 py-1 text-xs text-ink-600 transition-colors hover:border-felt-500/40 hover:bg-felt-500/12 hover:text-felt-300"
               >
                 {m}
               </button>

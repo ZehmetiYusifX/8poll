@@ -116,7 +116,7 @@ export function VenueProfile() {
         >
           <VenuePhoto src={photos[0]} alt={venue.name} />
           {photos.length > 0 && (
-            <span className="absolute inset-0 bg-ink-950/0 transition-colors hover:bg-ink-950/10" />
+            <span className="absolute inset-0 bg-black/0 transition-colors hover:bg-black/10" />
           )}
         </button>
 
@@ -140,7 +140,7 @@ export function VenueProfile() {
                         type="button"
                         onClick={() => setPhotoToRemove(url)}
                         aria-label="Şəkli sil"
-                        className="absolute right-1.5 top-1.5 rounded-lg bg-ink-950/60 p-1.5 text-cream opacity-0 backdrop-blur-sm transition-opacity hover:bg-clay-700 focus-visible:opacity-100 group-hover:opacity-100"
+                        className="absolute right-1.5 top-1.5 rounded-lg bg-black/60 p-1.5 text-ivory opacity-0 backdrop-blur-sm transition-opacity hover:bg-clay-700 focus-visible:opacity-100 group-hover:opacity-100"
                       >
                         <IconTrash size={14} />
                       </button>
@@ -151,13 +151,13 @@ export function VenueProfile() {
                     type="button"
                     onClick={() => fileInput.current?.click()}
                     disabled={uploading}
-                    className="flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-rail-strong bg-cream text-ink-400 transition-colors hover:border-felt-300 hover:bg-felt-50 hover:text-felt-700"
+                    className="flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-rail-strong bg-cream text-ink-400 transition-colors hover:border-felt-500/40 hover:bg-felt-500/12 hover:text-felt-300"
                   >
                     <IconImage size={20} />
                     <span className="text-xs font-medium">Şəkil əlavə et</span>
                   </button>
                 ) : (
-                  <div className="h-full w-full rounded-xl bg-wood-100/60" />
+                  <div className="h-full w-full rounded-xl bg-gold-400/12/60" />
                 )}
               </div>
             )
@@ -195,7 +195,7 @@ export function VenueProfile() {
             {venue.phone && (
               <a
                 href={`tel:${venue.phone.replace(/\s/g, '')}`}
-                className="inline-flex items-center gap-1.5 text-felt-700 underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1.5 text-felt-300 underline-offset-4 hover:underline"
               >
                 <IconPhone size={15} />
                 {venue.phone}
@@ -346,7 +346,7 @@ function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink-950/90 p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label={`${name} şəkilləri`}
@@ -356,7 +356,7 @@ function Lightbox({
         type="button"
         onClick={onClose}
         aria-label="Bağla"
-        className="absolute right-4 top-4 rounded-lg p-2 text-cream/70 transition-colors hover:bg-white/10 hover:text-cream"
+        className="absolute right-4 top-4 rounded-lg p-2 text-ivory/70 transition-colors hover:bg-white/10 hover:text-ivory"
       >
         <IconX size={22} />
       </button>
@@ -558,8 +558,8 @@ function CreateTournamentModal({
                 className={cx(
                   'rounded-lg border py-2 text-sm font-semibold tabular-nums transition-colors',
                   form.maxParticipants === n
-                    ? 'border-felt-600 bg-felt-50 text-felt-800'
-                    : 'border-rail-strong bg-cream text-ink-600 hover:border-wood-300',
+                    ? 'border-felt-600 bg-felt-500/12 text-felt-300'
+                    : 'border-rail-strong bg-cream text-ink-600 hover:border-gold-400/40',
                 )}
               >
                 {n}

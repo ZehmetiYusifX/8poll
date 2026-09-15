@@ -141,11 +141,11 @@ function PlayerCard({
         <div className="min-w-0 flex-1">
           <Link
             to={`/players/${player.id}`}
-            className="flex items-center gap-2 truncate font-semibold text-ink-900 transition-colors hover:text-felt-700"
+            className="flex items-center gap-2 truncate font-semibold text-ink-900 transition-colors hover:text-felt-300"
           >
             <span className="truncate">{player.fullName}</span>
             {isMe && (
-              <span className="shrink-0 rounded-full bg-felt-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cream">
+              <span className="shrink-0 rounded-full bg-felt-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ivory">
                 Siz
               </span>
             )}
@@ -154,7 +154,7 @@ function PlayerCard({
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="font-display text-lg font-semibold leading-none tabular-nums text-felt-700">
+          <div className="font-display text-lg font-semibold leading-none tabular-nums text-felt-300">
             {player.rating}
           </div>
           <div className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-400">xal</div>
@@ -165,8 +165,8 @@ function PlayerCard({
       <div className="mt-3.5">
         <div className="flex items-center justify-between text-[11px] text-ink-400">
           <span>
-            <b className="font-semibold text-felt-700">{player.wins}</b> qələbə ·{' '}
-            <b className="font-semibold text-clay-700">{player.losses}</b> məğlub
+            <b className="font-semibold text-felt-300">{player.wins}</b> qələbə ·{' '}
+            <b className="font-semibold text-clay-300">{player.losses}</b> məğlub
           </span>
           <span className="tabular-nums">{total > 0 ? `${winPct}%` : '—'}</span>
         </div>

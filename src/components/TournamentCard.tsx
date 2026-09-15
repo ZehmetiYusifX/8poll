@@ -48,7 +48,7 @@ export function TournamentCard({
             <span className="inline-flex items-center gap-1">
               <IconCalendar size={13} className="text-ink-400" />
               {formatDate(t.startAt)}
-              {soon && <span className="text-felt-700">· {soon}</span>}
+              {soon && <span className="text-felt-300">· {soon}</span>}
             </span>
           )}
         </div>
@@ -75,7 +75,7 @@ export function TournamentCard({
 
         {t.status === 'COMPLETED' && t.winner && (
           <div className="mt-3.5 flex items-center gap-2 border-t border-rail pt-3 text-sm">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-wood-100 text-wood-600">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-400/12 text-gold-300">
               <IconTrophy size={13} />
             </span>
             <span className="text-ink-500">

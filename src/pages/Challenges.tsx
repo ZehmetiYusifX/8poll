@@ -142,7 +142,7 @@ export function Challenges() {
                 title={
                   <Link
                     to={`/players/${other.id}`}
-                    className="font-semibold text-ink-900 transition-colors hover:text-felt-700"
+                    className="font-semibold text-ink-900 transition-colors hover:text-felt-300"
                   >
                     {other.fullName}
                   </Link>
@@ -157,7 +157,7 @@ export function Challenges() {
                     {c.venue && (
                       <>
                         <span aria-hidden>·</span>
-                        <span className="inline-flex items-center gap-0.5 text-felt-700">
+                        <span className="inline-flex items-center gap-0.5 text-felt-300">
                           <IconPin size={12} />
                           {c.venue.name}
                         </span>

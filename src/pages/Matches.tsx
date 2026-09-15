@@ -182,12 +182,12 @@ export function Matches() {
           {mine.length > 0 && (
             <Card padded={false}>
               <dl className="grid grid-cols-3 divide-x divide-rail">
-                <SummaryCell label="Qələbə" value={summary.wins} className="text-felt-700" />
-                <SummaryCell label="Məğlubiyyət" value={summary.losses} className="text-clay-700" />
+                <SummaryCell label="Qələbə" value={summary.wins} className="text-felt-300" />
+                <SummaryCell label="Məğlubiyyət" value={summary.losses} className="text-clay-300" />
                 <SummaryCell
                   label="Ümumi reytinq"
                   value={`${summary.delta > 0 ? '+' : ''}${summary.delta}`}
-                  className={summary.delta >= 0 ? 'text-felt-700' : 'text-clay-700'}
+                  className={summary.delta >= 0 ? 'text-felt-300' : 'text-clay-300'}
                 />
               </dl>
             </Card>

@@ -66,7 +66,7 @@ export function VenueMine() {
                       {v.address}
                     </p>
                   )}
-                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-felt-700">
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-felt-300">
                     İdarə et
                     <IconArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
                   </span>

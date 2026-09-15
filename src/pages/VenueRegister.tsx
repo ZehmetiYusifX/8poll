@@ -59,7 +59,7 @@ export function VenueRegister() {
       footer={
         <p>
           Adi oyunçu kimi qoşulmaq istəyirsiniz?{' '}
-          <Link to="/register" className="font-semibold text-felt-700 underline-offset-4 hover:underline">
+          <Link to="/register" className="font-semibold text-felt-300 underline-offset-4 hover:underline">
             Buradan qeydiyyat
           </Link>
         </p>
@@ -147,9 +147,9 @@ export function VenueRegister() {
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section aria-label={title} className="space-y-4">
-      <h2 className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-wood-600">
+      <h2 className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-gold-300">
         {title}
-        <span className="rule-brass h-px flex-1" aria-hidden />
+        <span className="rule-gold h-px flex-1" aria-hidden />
       </h2>
       {children}
     </section>

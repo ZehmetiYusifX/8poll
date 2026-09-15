@@ -79,12 +79,12 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
     >
       {done ? (
         <div className="space-y-4">
-          <div className="rounded-xl border border-felt-200 bg-felt-50 p-5 text-center">
-            <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-felt-600 text-cream">
+          <div className="rounded-xl border border-felt-500/30 bg-felt-500/12 p-5 text-center">
+            <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-felt-600 text-ivory">
               <IconCheck size={22} />
             </span>
-            <p className="font-medium text-felt-800">Nəticə qeydə alındı</p>
-            <p className="mx-auto mt-1 max-w-xs text-sm text-felt-700/80">
+            <p className="font-medium text-felt-300">Nəticə qeydə alındı</p>
+            <p className="mx-auto mt-1 max-w-xs text-sm text-felt-300/80">
               <b>{opponentName}</b> təsdiqlədikdən sonra hər ikinizin Elo reytinqi yenilənəcək.
             </p>
           </div>
@@ -135,7 +135,7 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
             {myScore !== theirScore && selected && (
               <p className="mt-3.5 border-t border-rail pt-3 text-center text-sm text-ink-500">
                 Qalib:{' '}
-                <b className="font-semibold text-felt-700">
+                <b className="font-semibold text-felt-300">
                   {iWon ? user?.fullName : selected.fullName}
                 </b>
               </p>
@@ -190,7 +190,7 @@ function ScoreColumn({
   return (
     <div className="min-w-0 text-center">
       <div className="mb-2 flex flex-col items-center gap-1.5">
-        <Avatar name={name} color={color} size={36} ring={winning ? 'brass' : 'none'} />
+        <Avatar name={name} color={color} size={36} ring={winning ? 'gold' : 'none'} />
         <div className="min-w-0 max-w-full">
           <div className="truncate text-xs font-semibold text-ink-800">{name}</div>
           <div className="truncate text-[11px] text-ink-400">{sublabel}</div>
@@ -200,7 +200,7 @@ function ScoreColumn({
       <div
         className={cx(
           'flex items-center justify-between gap-1 rounded-lg border bg-card p-1 transition-colors',
-          winning ? 'border-felt-300' : 'border-rail-strong',
+          winning ? 'border-felt-500/40' : 'border-rail-strong',
         )}
       >
         <StepButton label="Azalt" onClick={() => onChange(clamp(value - 1))} disabled={value === 0}>
@@ -218,7 +218,7 @@ function ScoreColumn({
           aria-label={`${name} hesabı`}
           className={cx(
             'w-full min-w-0 border-0 bg-transparent text-center font-display text-2xl font-semibold tabular-nums outline-none',
-            winning ? 'text-felt-700' : 'text-ink-800',
+            winning ? 'text-felt-300' : 'text-ink-800',
           )}
         />
 
@@ -251,7 +251,7 @@ function StepButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-500 transition-colors hover:bg-wood-100 hover:text-ink-900 disabled:opacity-35 disabled:hover:bg-transparent"
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-500 transition-colors hover:bg-gold-400/12 hover:text-ink-900 disabled:opacity-35 disabled:hover:bg-transparent"
     >
       {children}
     </button>

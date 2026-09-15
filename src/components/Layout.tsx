@@ -4,11 +4,12 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '../context/AuthContext'
 import { ChallengeApi, MatchApi } from '../api'
 import { Avatar } from './Avatar'
+import { BrandLink, SLOGAN } from './Brand'
 import { Count, cx } from './ui'
 import {
   IconBuilding,
   IconChevronDown,
-  IconEightBall,
+  EloabfMark,
   IconHome,
   IconLogout,
   IconMedal,
@@ -118,17 +119,23 @@ export function Layout() {
         Əsas məzmuna keç
       </a>
 
-      <header
-        className="sticky top-0 z-40 bg-felt-900 shadow-md"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(45deg, rgba(255,255,255,0.014) 0 2px, transparent 2px 4px)',
-        }}
-      >
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-1 px-4">
-          <Brand />
+      {/*
+        Başlıq klub zalının tavanı kimi işləyir: mahud yaşılı səth və
+        yuxarıdan düşən zəif spot işığı. Altındakı qızıl xətt masanın railıdır.
+      */}
+      <header className="felt-weave sticky top-0 z-40 bg-felt-950 shadow-lg">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(55% 150% at 50% -35%, rgba(215,181,109,0.13) 0%, transparent 70%)',
+          }}
+        />
+        <div className="relative mx-auto flex h-16 max-w-6xl items-center gap-1 px-4">
+          <BrandLink />
 
-          <nav aria-label="Əsas naviqasiya" className="ml-4 hidden items-center gap-0.5 lg:flex">
+          <nav aria-label="Əsas naviqasiya" className="ml-6 hidden items-center gap-0.5 lg:flex">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -138,13 +145,13 @@ export function Layout() {
                   cx(
                     'relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
                     isActive
-                      ? 'bg-felt-950/70 text-cream shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
-                      : 'text-felt-100/75 hover:bg-felt-800 hover:text-cream',
+                      ? 'bg-black/30 text-ivory edge-light'
+                      : 'text-felt-100/70 hover:bg-white/6 hover:text-ivory',
                   )
                 }
               >
                 {item.label}
-                <Count value={countOf(item.counter)} className="bg-wood-400 text-felt-950" />
+                <Count value={countOf(item.counter)} className="bg-gold-400 text-felt-950" />
               </NavLink>
             ))}
           </nav>
@@ -159,17 +166,20 @@ export function Layout() {
                 aria-label={`${user.username} — hesab menyusu`}
                 className={cx(
                   'flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-colors duration-150 sm:pr-3',
-                  menuOpen ? 'bg-felt-800' : 'hover:bg-felt-800',
+                  menuOpen ? 'bg-white/10' : 'hover:bg-white/6',
                 )}
               >
                 <Avatar name={user.fullName} color={user.avatarColor} size={32} ring="light" />
                 <span className="hidden text-left leading-tight sm:block">
-                  <span className="block text-[13px] font-semibold text-cream">{user.username}</span>
-                  <span className="block text-[11px] tabular-nums text-felt-200">{user.rating} xal</span>
+                  <span className="block text-[13px] font-semibold text-ivory">{user.username}</span>
+                  {/* Reytinq qızıl rənglə — brendbukda "Winner Gold" nəticə rəngidir */}
+                  <span className="block text-[11px] font-semibold tabular-nums text-gold-400">
+                    {user.rating} xal
+                  </span>
                 </span>
                 <IconChevronDown
                   size={16}
-                  className={cx('text-felt-200 transition-transform duration-200', menuOpen && 'rotate-180')}
+                  className={cx('text-felt-200/70 transition-transform duration-200', menuOpen && 'rotate-180')}
                 />
               </button>
 
@@ -206,7 +216,7 @@ export function Layout() {
                       type="button"
                       role="menuitem"
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-clay-700 transition-colors hover:bg-clay-50"
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-clay-300 transition-colors hover:bg-clay-500/12"
                     >
                       <IconLogout size={17} />
                       Çıxış
@@ -218,13 +228,13 @@ export function Layout() {
           )}
         </div>
 
-        {/* Qoz ağacı haşiyə — bilyard masasının railı */}
+        {/* Qızıl haşiyə — bilyard masasının railı */}
         <div
           aria-hidden
-          className="h-[3px] w-full"
+          className="relative h-[2px] w-full"
           style={{
             backgroundImage:
-              'linear-gradient(90deg, #513826 0%, #8a6239 18%, #bd9663 50%, #8a6239 82%, #513826 100%)',
+              'linear-gradient(90deg, #3a2c15 0%, #866731 18%, #d7b56d 50%, #866731 82%, #3a2c15 100%)',
           }}
         />
 
@@ -241,12 +251,12 @@ export function Layout() {
               className={({ isActive }) =>
                 cx(
                   'flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                  isActive ? 'bg-felt-100 text-felt-800' : 'text-ink-600 hover:bg-wood-100',
+                  isActive ? 'bg-felt-500/16 text-felt-300' : 'text-ink-600 hover:bg-gold-400/12',
                 )
               }
             >
               {item.label}
-              <Count value={countOf(item.counter)} className="bg-wood-300 text-wood-800" />
+              <Count value={countOf(item.counter)} className="bg-gold-400/30 text-gold-300" />
             </NavLink>
           ))}
         </nav>
@@ -256,10 +266,14 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="mt-auto border-t border-rail px-4 pb-24 pt-6 text-center md:pb-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-1.5 text-xs text-ink-400">
-          <IconEightBall size={18} className="text-ink-300" />
-          <p>8poll · Həvəskar bilyard reytinq platforması</p>
+      <footer className="mt-auto border-t border-rail px-4 pb-24 pt-8 text-center md:pb-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-2.5">
+          <EloabfMark size={26} plate={false} />
+          <p className="font-display text-[13px] font-semibold tracking-[0.02em] text-ink-700">
+            Eloabf
+          </p>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-gold-400/70">{SLOGAN}</p>
+          <p className="text-xs text-ink-400">Bilyard reytinq və turnir platforması</p>
         </div>
       </footer>
 
@@ -277,7 +291,7 @@ export function Layout() {
               className={({ isActive }) =>
                 cx(
                   'relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors',
-                  isActive ? 'text-felt-700' : 'text-ink-400',
+                  isActive ? 'text-gold-400' : 'text-ink-400',
                 )
               }
             >
@@ -287,13 +301,13 @@ export function Layout() {
                     aria-hidden
                     className={cx(
                       'absolute top-0 h-0.5 w-10 rounded-full transition-opacity duration-200',
-                      isActive ? 'bg-felt-700 opacity-100' : 'opacity-0',
+                      isActive ? 'bg-gold-400 opacity-100' : 'opacity-0',
                     )}
                   />
                   <span className="relative">
                     <item.icon size={21} />
                     {countOf(item.counter) > 0 && (
-                      <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-clay-600 px-1 text-[10px] font-bold text-white ring-2 ring-card">
+                      <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-clay-500 px-1 text-[10px] font-bold text-ivory ring-2 ring-card">
                         {countOf(item.counter)}
                       </span>
                     )}
@@ -306,17 +320,6 @@ export function Layout() {
         </div>
       </nav>
     </div>
-  )
-}
-
-function Brand() {
-  return (
-    <Link to="/" className="flex shrink-0 items-center gap-2.5" aria-label="8poll — ana səhifə">
-      <IconEightBall size={30} className="text-ink-950 drop-shadow-sm" />
-      <span className="font-display text-[22px] font-bold leading-none tracking-tight text-cream">
-        poll
-      </span>
-    </Link>
   )
 }
 

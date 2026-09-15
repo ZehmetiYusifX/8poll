@@ -106,14 +106,14 @@ export function PlayerProfile() {
     <div className="space-y-7">
       <Card padded={false} className="overflow-hidden">
         <div
-          className="flex flex-col gap-5 bg-felt-900 px-5 py-6 text-cream sm:flex-row sm:items-center sm:justify-between sm:px-6"
+          className="flex flex-col gap-5 bg-felt-900 px-5 py-6 text-ivory sm:flex-row sm:items-center sm:justify-between sm:px-6"
           style={{
             backgroundImage:
               'repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 4px)',
           }}
         >
           <div className="flex items-center gap-4">
-            <Avatar name={player.fullName} color={player.avatarColor} size={68} ring="brass" />
+            <Avatar name={player.fullName} color={player.avatarColor} size={68} ring="gold" />
             <div className="min-w-0">
               <h1 className="truncate font-display text-2xl font-semibold leading-tight">
                 {player.fullName}
@@ -128,7 +128,7 @@ export function PlayerProfile() {
           <div className="flex items-end gap-5">
             <div>
               <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">Reytinq</div>
-              <div className="font-display text-4xl font-bold leading-none tabular-nums text-wood-200">
+              <div className="font-display text-4xl font-bold leading-none tabular-nums text-gold-200">
                 {player.rating}
               </div>
             </div>
@@ -163,9 +163,9 @@ export function PlayerProfile() {
             <div className="ml-auto flex items-center gap-2 text-sm text-ink-500">
               <span className="text-xs uppercase tracking-wide text-ink-400">Sizinlə</span>
               <span className="font-display text-base font-semibold tabular-nums">
-                <span className="text-felt-700">{headToHead.mine}</span>
+                <span className="text-felt-300">{headToHead.mine}</span>
                 <span className="mx-1 text-ink-300">–</span>
-                <span className="text-clay-700">{headToHead.theirs}</span>
+                <span className="text-clay-300">{headToHead.theirs}</span>
               </span>
             </div>
           )}
@@ -268,8 +268,8 @@ function ProfileStat({
       <dd
         className={cx(
           'font-display text-xl font-semibold tabular-nums',
-          tone === 'win' && 'text-felt-700',
-          tone === 'loss' && 'text-clay-700',
+          tone === 'win' && 'text-felt-300',
+          tone === 'loss' && 'text-clay-300',
           tone === 'default' && 'text-ink-900',
         )}
       >
@@ -396,7 +396,7 @@ function EditProfileModal({
                 aria-pressed={color === c}
                 className={cx(
                   'h-8 w-8 rounded-full transition-transform duration-150 hover:scale-110',
-                  color === c && 'ring-2 ring-ink-900 ring-offset-2 ring-offset-card',
+                  color === c && 'ring-2 ring-gold-400 ring-offset-2 ring-offset-card',
                 )}
                 style={{ backgroundColor: c }}
               />

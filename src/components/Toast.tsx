@@ -19,20 +19,24 @@ interface ToastApi {
 
 const ToastCtx = createContext<ToastApi | null>(null)
 
+/*
+ * Bildiriş məzmunun üstündə üzdüyü üçün fonu şəffaf ola bilməz — altındakı
+ * səhifə görünərdi. Ona görə kart səthi verilir, çalar isə haşiyədədir.
+ */
 const toneStyle: Record<ToastTone, { box: string; iconBox: string; icon: ReactNode }> = {
   success: {
-    box: 'border-felt-200 bg-felt-50',
-    iconBox: 'bg-felt-600 text-cream',
+    box: 'border-felt-500/45 bg-card',
+    iconBox: 'bg-felt-600 text-ivory',
     icon: <IconCheck size={14} />,
   },
   error: {
-    box: 'border-clay-200 bg-clay-50',
-    iconBox: 'bg-clay-700 text-white',
+    box: 'border-clay-500/45 bg-card',
+    iconBox: 'bg-clay-600 text-ivory',
     icon: <IconAlert size={14} />,
   },
   info: {
-    box: 'border-steel-200 bg-steel-50',
-    iconBox: 'bg-steel-700 text-white',
+    box: 'border-steel-500/45 bg-card',
+    iconBox: 'bg-steel-600 text-ivory',
     icon: <IconInfo size={14} />,
   },
 }
@@ -98,7 +102,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={() => dismiss(t.id)}
                 aria-label="Bildirişi bağla"
-                className="-mr-1 rounded-md p-1 text-ink-400 transition-colors hover:bg-black/5 hover:text-ink-700"
+                className="-mr-1 rounded-md p-1 text-ink-400 transition-colors hover:bg-white/8 hover:text-ink-900"
               >
                 <IconX size={14} />
               </button>
