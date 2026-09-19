@@ -38,14 +38,17 @@ export function BrandLink({
   size = 30,
   wordmark = true,
   className = '',
+  /** Üzv üçün öz paneli, qonaq üçün təqdimat səhifəsi */
+  to = '/',
 }: {
   size?: number
   wordmark?: boolean
   className?: string
+  to?: string
 }) {
   return (
     <Link
-      to="/"
+      to={to}
       aria-label="Eloabf — ana səhifə"
       className={cx('shrink-0 rounded-lg transition-opacity hover:opacity-85', className)}
     >

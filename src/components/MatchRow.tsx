@@ -3,6 +3,7 @@ import { Avatar } from './Avatar'
 import { Badge, cx } from './ui'
 import { IconArrowDown, IconArrowUp, IconPin } from './icons'
 import { signed, timeAgo } from '../utils/format'
+import { GAME_TYPE_SHORT } from '../constants/gameTypes'
 import type { Match } from '../api/types'
 
 interface Props {
@@ -48,7 +49,7 @@ export function MatchRow({ match, viewerId, showVenue = true }: Props) {
       />
 
       <Link to={`/players/${other.id}`} className="shrink-0" tabIndex={-1} aria-hidden>
-        <Avatar name={other.fullName} color={other.avatarColor} size={40} />
+        <Avatar name={other.fullName} color={other.avatarColor} src={other.avatarUrl} size={40} />
       </Link>
 
       <div className="min-w-0 flex-1">
@@ -60,6 +61,9 @@ export function MatchRow({ match, viewerId, showVenue = true }: Props) {
         </Link>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-ink-400">
           <span className="truncate">@{other.username}</span>
+          <span aria-hidden>·</span>
+          {/* Reytinq yalnız bu intizama tətbiq olunub — hansı olduğu görünməlidir */}
+          <span className="text-ink-500">{GAME_TYPE_SHORT[match.gameType]}</span>
           <span aria-hidden>·</span>
           <span>{timeAgo(match.confirmedAt ?? match.createdAt)}</span>
           {showVenue && match.venue && (

@@ -34,7 +34,7 @@ export function Register() {
         email: form.email.trim(),
         password: form.password,
       })
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(extractErrorMessage(err))
     } finally {
@@ -58,6 +58,12 @@ export function Register() {
             Məkan sahibisiniz?{' '}
             <Link to="/venues/register" className="font-semibold text-felt-300 underline-offset-4 hover:underline">
               Klub hesabı açın
+            </Link>
+          </p>
+          <p>
+            Məşqçisiniz?{' '}
+            <Link to="/coaches/register" className="font-semibold text-felt-300 underline-offset-4 hover:underline">
+              Məşqçi hesabı açın
             </Link>
           </p>
         </>

@@ -11,12 +11,41 @@ export type MatchStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED'
 
 export type ChallengeDirection = 'INCOMING' | 'OUTGOING'
 
-export type Role = 'PLAYER' | 'VENUE_OWNER'
+export type Role = 'PLAYER' | 'VENUE_OWNER' | 'COACH' | 'ADMIN'
+
+/** Bilyard intizamları — hər birinin öz müstəqil reytinqi var */
+export type GameType = 'EIGHT_BALL' | 'RUSSIAN_PYRAMID' | 'SNOOKER'
+
+export type League = 'AMATEUR' | 'PROFESSIONAL'
+
+/** Liqa + klass bir dəyərdə: A ən üstün professional klassdır */
+export type Tier = 'AMATEUR' | 'PRO_C' | 'PRO_B' | 'PRO_A'
+
+/** Bir oyunçunun bir intizam üzrə reytinqi və statistikası */
+export interface PlayerRating {
+  gameType: GameType
+  gameTypeLabel: string
+  rating: number
+  gamesPlayed: number
+  wins: number
+  losses: number
+  draws: number
+  winRate: number
+  tier: Tier
+  league: League
+  /** 'A' | 'B' | 'C'; həvəskar liqada null */
+  playerClass: string | null
+}
 
 export type TournamentStatus = 'REGISTRATION' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
 
 export type BracketMatchStatus = 'PENDING' | 'READY' | 'COMPLETED'
 
+/**
+ * rating/gamesPlayed/... sahələri bütün intizamların aqreqatıdır:
+ * rating = ən yaxşı intizamın reytinqi, qalanları cəmdir.
+ * İntizam üzrə detallar `ratings` massivindədir.
+ */
 export interface Player {
   id: number
   username: string
@@ -24,6 +53,8 @@ export interface Player {
   email: string
   bio: string | null
   avatarColor: string | null
+  /** Yüklənmiş profil şəkli; null olduqda baş hərflər göstərilir */
+  avatarUrl: string | null
   role: Role
   rating: number
   gamesPlayed: number
@@ -31,18 +62,28 @@ export interface Player {
   losses: number
   draws: number
   winRate: number
+  ratings: PlayerRating[]
   createdAt: string
 }
 
+/**
+ * İntizam kontekstində (reytinq cədvəli, oyunçu siyahısı) rating/tier həmin
+ * intizama aiddir. Kontekst olmayan yerlərdə (maç, dəvət sətirləri) rating
+ * aqreqatdır və tier null olur.
+ */
 export interface PlayerSummary {
   id: number
   username: string
   fullName: string
   avatarColor: string | null
+  avatarUrl: string | null
   rating: number
   gamesPlayed: number
   wins: number
   losses: number
+  tier: Tier | null
+  league: League | null
+  playerClass: string | null
 }
 
 export interface LeaderboardEntry {
@@ -73,6 +114,8 @@ export interface Challenge {
   challenger: PlayerSummary
   opponent: PlayerSummary
   venue: VenueSummary | null
+  gameType: GameType
+  gameTypeLabel: string
   message: string | null
   status: ChallengeStatus
   direction: ChallengeDirection
@@ -85,6 +128,8 @@ export interface Match {
   reporter: PlayerSummary
   opponent: PlayerSummary
   venue: VenueSummary | null
+  gameType: GameType
+  gameTypeLabel: string
   reporterScore: number
   opponentScore: number
   winnerId: number | null
@@ -116,6 +161,7 @@ export interface LoginRequest {
 
 export interface CreateChallengeRequest {
   opponentId: number
+  gameType: GameType
   message?: string
   venueId?: number | null
 }
@@ -145,6 +191,8 @@ export interface Tournament {
   description: string | null
   venue: VenueSummary
   owner: PlayerSummary
+  gameType: GameType
+  gameTypeLabel: string
   startAt: string | null
   maxParticipants: number
   participantCount: number
@@ -175,6 +223,7 @@ export interface TournamentDetail {
 export interface CreateTournamentRequest {
   name: string
   venueId: number
+  gameType: GameType
   description?: string
   startAt?: string | null
   maxParticipants?: number
@@ -187,9 +236,195 @@ export interface ReportResultRequest {
 
 export interface ReportMatchRequest {
   opponentId: number
+  gameType: GameType
   myScore: number
   opponentScore: number
   challengeId?: number | null
+}
+
+// --- Qalereya ---
+
+/** Turnirə bağlanmamış şəkillərin toplandığı albomun sabit açarı */
+export const GENERAL_ALBUM_KEY = 'general'
+
+export interface GalleryImage {
+  id: number
+  url: string
+  title: string | null
+  caption: string | null
+  tournamentId: number | null
+  tournamentName: string | null
+  sortOrder: number
+  visible: boolean
+  cover: boolean
+  createdAt: string
+}
+
+/** Bir turnirin albomu, ya da turnirsiz şəkillərin "Ümumi" yığımı */
+export interface GalleryAlbum {
+  key: string
+  tournamentId: number | null
+  name: string
+  venueName: string | null
+  tournamentStartAt: string | null
+  coverUrl: string | null
+  imageCount: number
+  images: GalleryImage[]
+}
+
+export interface UpdateGalleryImageRequest {
+  title?: string | null
+  caption?: string | null
+  tournamentId?: number | null
+  sortOrder?: number | null
+  visible?: boolean | null
+  cover?: boolean | null
+}
+
+// --- Akademiya ---
+
+export type CoachingLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+
+export type LessonFormat = 'INDIVIDUAL' | 'GROUP'
+
+export type LessonOrderStatus =
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'DECLINED'
+  | 'CANCELLED'
+  | 'PAID'
+  | 'COMPLETED'
+
+/** Sifariş sətri kimin gözü ilə görünür: şagirdin göndərdiyi, yoxsa məşqçiyə gələn */
+export type OrderDirection = 'INCOMING' | 'OUTGOING'
+
+/** Siyahı və paket kartlarında göstərilən yüngül məşqçi məlumatı */
+export interface CoachSummary {
+  id: number
+  player: PlayerSummary
+  headline: string | null
+  experienceYears: number | null
+  venue: VenueSummary | null
+  gameTypes: GameType[]
+}
+
+export interface Coach {
+  id: number
+  player: PlayerSummary
+  headline: string | null
+  about: string | null
+  experienceYears: number | null
+  certifications: string | null
+  phone: string | null
+  venue: VenueSummary | null
+  gameTypes: GameType[]
+  gameTypeLabels: string[]
+  packageCount: number
+  active: boolean
+  createdAt: string
+}
+
+export interface LessonPackage {
+  id: number
+  coach: CoachSummary
+  title: string
+  description: string | null
+  gameType: GameType
+  gameTypeLabel: string
+  level: CoachingLevel
+  levelLabel: string
+  format: LessonFormat
+  formatLabel: string
+  lessonCount: number
+  lessonMinutes: number
+  /** Yalnız GROUP formatında dolur */
+  groupSize: number | null
+  price: number
+  venue: VenueSummary | null
+  /** Aktiv sifarişlərin sayı — «neçə şagird» göstəricisi */
+  studentCount: number
+  active: boolean
+  createdAt: string
+}
+
+export interface LessonOrder {
+  id: number
+  lessonPackage: LessonPackage
+  student: PlayerSummary
+  /** Sifariş anındakı şərtlər — paket sonra dəyişsə də bunlar dəyişmir */
+  price: number
+  lessonCount: number
+  status: LessonOrderStatus
+  statusLabel: string
+  message: string | null
+  coachNote: string | null
+  direction: OrderDirection
+  createdAt: string
+  respondedAt: string | null
+  paidAt: string | null
+  completedAt: string | null
+}
+
+export interface CoachRegisterRequest {
+  username: string
+  email: string
+  password: string
+  fullName: string
+  headline?: string
+  about?: string
+  experienceYears?: number | null
+  certifications?: string
+  phone?: string
+  venueId?: number | null
+  gameTypes?: GameType[]
+}
+
+export interface UpdateCoachRequest {
+  fullName?: string
+  headline?: string
+  about?: string
+  experienceYears?: number | null
+  certifications?: string
+  phone?: string
+  venueId?: number | null
+  gameTypes?: GameType[]
+  active?: boolean | null
+}
+
+export interface CreateLessonPackageRequest {
+  title: string
+  description?: string
+  gameType: GameType
+  level: CoachingLevel
+  format: LessonFormat
+  lessonCount: number
+  lessonMinutes: number
+  groupSize?: number | null
+  price: number
+  venueId?: number | null
+}
+
+export interface UpdateLessonPackageRequest {
+  title?: string
+  description?: string
+  gameType?: GameType | null
+  level?: CoachingLevel | null
+  format?: LessonFormat | null
+  lessonCount?: number | null
+  lessonMinutes?: number | null
+  groupSize?: number | null
+  price?: number | null
+  venueId?: number | null
+  active?: boolean | null
+}
+
+export interface CreateLessonOrderRequest {
+  packageId: number
+  message?: string
+}
+
+export interface RespondOrderRequest {
+  coachNote?: string
 }
 
 export interface ApiError {

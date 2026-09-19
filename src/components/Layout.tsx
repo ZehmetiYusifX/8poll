@@ -5,12 +5,14 @@ import { useAuth } from '../context/AuthContext'
 import { ChallengeApi, MatchApi } from '../api'
 import { Avatar } from './Avatar'
 import { BrandLink, SLOGAN } from './Brand'
-import { Count, cx } from './ui'
+import { Count, buttonClass, cx } from './ui'
 import {
+  IconAcademy,
   IconBuilding,
   IconChevronDown,
   EloabfMark,
   IconHome,
+  IconImage,
   IconLogout,
   IconMedal,
   IconSwords,
@@ -32,14 +34,24 @@ interface NavItem {
   primary?: boolean
 }
 
-const NAV: NavItem[] = [
-  { to: '/', label: 'Ana səhifə', short: 'Əsas', icon: IconHome, end: true, primary: true },
+/*
+ * Qonaq da bu çərçivə ilə gəzir — reytinq, oyunçu, məkan və turnir
+ * bölmələri backend-də də açıqdır. Ona görə naviqasiya iki hissəyə
+ * bölünür: hamıya açıq bölmələr və yalnız üzvə aid olanlar.
+ */
+const PUBLIC_NAV: NavItem[] = [
   { to: '/leaderboard', label: 'Reytinq', icon: IconTrophy, primary: true },
   { to: '/players', label: 'Oyunçular', short: 'Oyunçu', icon: IconUsers, primary: true },
-  { to: '/venues', label: 'Məkanlar', icon: IconBuilding },
-  { to: '/tournaments', label: 'Turnirlər', icon: IconMedal },
+  { to: '/tournaments', label: 'Turnirlər', short: 'Turnir', icon: IconMedal },
+  { to: '/academy', label: 'Akademiya', short: 'Dərs', icon: IconAcademy },
+  { to: '/venues', label: 'Məkanlar', short: 'Məkan', icon: IconBuilding },
+  { to: '/gallery', label: 'Qalereya', short: 'Şəkil', icon: IconImage },
+]
+
+const MEMBER_NAV: NavItem[] = [
   { to: '/challenges', label: 'Dəvətlər', short: 'Dəvət', icon: IconSwords, counter: 'challenges', primary: true },
   { to: '/matches', label: 'Maçlarım', short: 'Maçlar', icon: IconTable, counter: 'matches', primary: true },
+  { to: '/academy/mine', label: 'Kurslarım', icon: IconAcademy },
 ]
 
 const POLL_MS = 30_000
@@ -53,10 +65,25 @@ export function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const navItems: NavItem[] =
-    user?.role === 'VENUE_OWNER'
-      ? [...NAV, { to: '/venues/mine', label: 'Məkanım', icon: IconBuilding }]
-      : NAV
+  // Qonaq üçün ana səhifə təqdimat səhifəsidir, üzv üçün öz paneli
+  const home: NavItem = user
+    ? { to: '/dashboard', label: 'Panel', short: 'Panel', icon: IconHome, end: true, primary: true }
+    : { to: '/', label: 'Ana səhifə', short: 'Əsas', icon: IconHome, end: true, primary: true }
+
+  const navItems: NavItem[] = user
+    ? [
+        home,
+        ...PUBLIC_NAV,
+        ...MEMBER_NAV,
+        ...(user.role === 'VENUE_OWNER'
+          ? [{ to: '/venues/mine', label: 'Məkanım', icon: IconBuilding }]
+          : []),
+        ...(user.role === 'COACH'
+          ? [{ to: '/coaches/panel', label: 'Məşqçi panelim', icon: IconAcademy }]
+          : []),
+      ]
+    : // Qonaqda üzvə aid bölmə yoxdur, ona görə açıq bölmələr alt panelə sığır
+      [home, ...PUBLIC_NAV.map((i) => ({ ...i, primary: true }))]
 
   // Gələn dəvət / təsdiq gözləyən maç sayğacları
   useEffect(() => {
@@ -133,7 +160,7 @@ export function Layout() {
           }}
         />
         <div className="relative mx-auto flex h-16 max-w-6xl items-center gap-1 px-4">
-          <BrandLink />
+          <BrandLink to={home.to} />
 
           <nav aria-label="Əsas naviqasiya" className="ml-6 hidden items-center gap-0.5 lg:flex">
             {navItems.map((item) => (
@@ -156,6 +183,20 @@ export function Layout() {
             ))}
           </nav>
 
+          {!user && (
+            <div className="ml-auto flex items-center gap-2">
+              <Link
+                to="/login"
+                className={buttonClass('ghost', 'sm', 'text-felt-100/80 hover:bg-white/10 hover:text-ivory')}
+              >
+                Daxil ol
+              </Link>
+              <Link to="/register" className={buttonClass('gold', 'sm')}>
+                Qeydiyyat
+              </Link>
+            </div>
+          )}
+
           {user && (
             <div ref={menuRef} className="relative ml-auto">
               <button
@@ -169,7 +210,7 @@ export function Layout() {
                   menuOpen ? 'bg-white/10' : 'hover:bg-white/6',
                 )}
               >
-                <Avatar name={user.fullName} color={user.avatarColor} size={32} ring="light" />
+                <Avatar name={user.fullName} color={user.avatarColor} src={user.avatarUrl} size={32} ring="light" />
                 <span className="hidden text-left leading-tight sm:block">
                   <span className="block text-[13px] font-semibold text-ivory">{user.username}</span>
                   {/* Reytinq qızıl rənglə — brendbukda "Winner Gold" nəticə rəngidir */}
@@ -193,7 +234,7 @@ export function Layout() {
                     role="menuitem"
                     className="flex items-center gap-3 border-b border-rail px-3.5 py-3 transition-colors hover:bg-cream"
                   >
-                    <Avatar name={user.fullName} color={user.avatarColor} size={38} />
+                    <Avatar name={user.fullName} color={user.avatarColor} src={user.avatarUrl} size={38} />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-ink-900">
                         {user.fullName}
@@ -210,6 +251,15 @@ export function Layout() {
                       </MenuLink>
                     ))}
                   </div>
+
+                  {/* Admin bölməsi naviqasiya zolağını doldurmasın deyə yalnız menyudadır */}
+                  {user.role === 'ADMIN' && (
+                    <div className="border-t border-rail py-1">
+                      <MenuLink to="/admin/gallery" icon={<IconImage size={17} />}>
+                        Qalereya idarəetməsi
+                      </MenuLink>
+                    </div>
+                  )}
 
                   <div className="border-t border-rail py-1">
                     <button
@@ -282,7 +332,11 @@ export function Layout() {
         aria-label="Əsas naviqasiya"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-rail bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       >
-        <div className="grid grid-cols-5">
+        {/* Sütun sayı dəyişkəndir: qonaqda və üzvdə fərqli sayda bölmə görünür */}
+        <div
+          className="grid"
+          style={{ gridTemplateColumns: `repeat(${primaryItems.length}, minmax(0, 1fr))` }}
+        >
           {primaryItems.map((item) => (
             <NavLink
               key={item.to}

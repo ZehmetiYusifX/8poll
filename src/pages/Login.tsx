@@ -11,7 +11,7 @@ export function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from ?? '/'
+  const from = (location.state as { from?: string } | null)?.from ?? '/dashboard'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -54,6 +54,12 @@ export function Login() {
             Məkan sahibisiniz?{' '}
             <Link to="/venues/register" className="font-semibold text-felt-300 underline-offset-4 hover:underline">
               Klub hesabı açın
+            </Link>
+          </p>
+          <p>
+            Məşqçisiniz?{' '}
+            <Link to="/coaches/register" className="font-semibold text-felt-300 underline-offset-4 hover:underline">
+              Məşqçi hesabı açın
             </Link>
           </p>
         </>

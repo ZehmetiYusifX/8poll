@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { TournamentApi } from '../api'
+import { GalleryApi, TournamentApi } from '../api'
 import { useAuth } from '../context/AuthContext'
 import { Avatar } from '../components/Avatar'
+import { Lightbox } from '../components/Lightbox'
 import { Modal } from '../components/Modal'
 import { statusMeta } from '../components/TournamentCard'
 import {
@@ -17,6 +18,7 @@ import {
   PageHeader,
   SectionHeader,
   Skeleton,
+  buttonClass,
   cx,
 } from '../components/ui'
 import {
@@ -27,9 +29,10 @@ import {
   IconUsers,
 } from '../components/icons'
 import { useToast } from '../components/Toast'
-import { extractErrorMessage } from '../api/client'
+import { extractErrorMessage, mediaUrl } from '../api/client'
 import { formatDateTime } from '../utils/format'
-import type { TournamentDetail as TDetail, BracketMatch } from '../api/types'
+import { GAME_TYPE_LABEL } from '../constants/gameTypes'
+import type { TournamentDetail as TDetail, BracketMatch, GalleryImage } from '../api/types'
 
 export function TournamentDetail() {
   const { id } = useParams()
@@ -114,6 +117,8 @@ export function TournamentDetail() {
           <span className="flex flex-wrap items-center gap-3">
             {t.name}
             <Badge tone={st.tone}>{st.text}</Badge>
+            {/* Seed sıralaması bu intizamın reytinqinə görə qurulub */}
+            <Badge tone="neutral">{GAME_TYPE_LABEL[t.gameType]}</Badge>
           </span>
         }
         subtitle={
@@ -126,7 +131,18 @@ export function TournamentDetail() {
         }
         actions={
           <>
-            {t.status === 'REGISTRATION' && !isOwner && (
+            {/* Qonaq turniri görə bilir, qoşulmaq üçün hesab lazımdır */}
+            {t.status === 'REGISTRATION' && !user && (
+              <Link
+                to="/login"
+                state={{ from: `/tournaments/${tid}` }}
+                className={buttonClass('primary', 'md')}
+              >
+                <IconUsers size={16} />
+                Qoşulmaq üçün daxil olun
+              </Link>
+            )}
+            {t.status === 'REGISTRATION' && !!user && !isOwner && (
               isParticipant ? (
                 <Button
                   variant="secondary"
@@ -228,7 +244,7 @@ export function TournamentDetail() {
                       <span className="w-5 shrink-0 text-center text-xs font-semibold tabular-nums text-ink-400">
                         {i + 1}
                       </span>
-                      <Avatar name={p.fullName} color={p.avatarColor} size={38} />
+                      <Avatar name={p.fullName} color={p.avatarColor} src={p.avatarUrl} size={38} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-ink-900">
                           {p.fullName}
@@ -276,6 +292,8 @@ export function TournamentDetail() {
         </section>
       )}
 
+      <TournamentPhotos tournamentId={tid} />
+
       {reportMatch && (
         <ReportBracketModal
           tid={tid}
@@ -289,6 +307,74 @@ export function TournamentDetail() {
         />
       )}
     </div>
+  )
+}
+
+/* ── Turnir şəkilləri ───────────────────────────────────────── */
+
+/**
+ * Turnirin qalereya albomu. Şəkil yoxdursa heç nə göstərmir —
+ * əksər turnirlərin şəkli olmayacaq, boş bölmə səhifəni uzadardı.
+ */
+function TournamentPhotos({ tournamentId }: { tournamentId: number }) {
+  const [images, setImages] = useState<GalleryImage[]>([])
+  const [index, setIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    let active = true
+    GalleryApi.byTournament(tournamentId)
+      .then((data) => active && setImages(data))
+      .catch(() => {
+        /* şəkillər əlavə məzmundur — xəta səhifəni pozmasın */
+      })
+    return () => {
+      active = false
+    }
+  }, [tournamentId])
+
+  if (images.length === 0) return null
+
+  return (
+    <section>
+      <SectionHeader
+        title="Şəkillər"
+        count={images.length}
+        action={
+          <Link
+            to="/gallery"
+            className="text-sm font-medium text-felt-300 transition-colors hover:text-felt-200"
+          >
+            Qalereya
+          </Link>
+        }
+      />
+
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        {images.map((image, i) => (
+          <button
+            key={image.id}
+            type="button"
+            onClick={() => setIndex(i)}
+            className="group h-28 w-40 shrink-0 overflow-hidden rounded-lg border border-rail bg-felt-900 transition-colors hover:border-gold-400/50"
+          >
+            <img
+              src={mediaUrl(image.url)}
+              alt={image.title ?? ''}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            />
+          </button>
+        ))}
+      </div>
+
+      <Lightbox
+        images={images}
+        index={index}
+        onIndexChange={setIndex}
+        onClose={() => setIndex(null)}
+      />
+    </section>
   )
 }
 
@@ -323,7 +409,7 @@ function BracketCard({
       >
         {player ? (
           <>
-            <Avatar name={player.fullName} color={player.avatarColor} size={22} />
+            <Avatar name={player.fullName} color={player.avatarColor} src={player.avatarUrl} size={22} />
             <span
               className={cx(
                 'min-w-0 flex-1 truncate text-sm',

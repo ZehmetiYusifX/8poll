@@ -5,22 +5,26 @@ import { Avatar } from './Avatar'
 import { IconCheck, IconSwords } from './icons'
 import { ChallengeApi, VenueApi } from '../api'
 import { extractErrorMessage } from '../api/client'
-import type { PlayerSummary, Player, Venue } from '../api/types'
+import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import type { GameType, PlayerSummary, Player, Venue } from '../api/types'
 
 interface Props {
   opponent: PlayerSummary | Player
   open: boolean
   onClose: () => void
   onDone?: () => void
+  /** Əvvəlcədən seçilmiş intizam (məs. profildə baxılan intizam) */
+  defaultGameType?: GameType
 }
 
 const MESSAGE_LIMIT = 300
 
 const QUICK_MESSAGES = ['Sabah axşam bir oyun?', 'Bu həftə sonu oynayaq?', 'Revanş vaxtıdır!']
 
-export function ChallengeModal({ opponent, open, onClose, onDone }: Props) {
+export function ChallengeModal({ opponent, open, onClose, onDone, defaultGameType }: Props) {
   const [message, setMessage] = useState('')
   const [venueId, setVenueId] = useState('')
+  const [gameType, setGameType] = useState<GameType>(defaultGameType ?? DEFAULT_GAME_TYPE)
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -28,8 +32,9 @@ export function ChallengeModal({ opponent, open, onClose, onDone }: Props) {
 
   useEffect(() => {
     if (!open) return
+    setGameType(defaultGameType ?? DEFAULT_GAME_TYPE)
     VenueApi.list().then(setVenues).catch(() => setVenues([]))
-  }, [open])
+  }, [open, defaultGameType])
 
   const submit = async () => {
     setLoading(true)
@@ -37,6 +42,7 @@ export function ChallengeModal({ opponent, open, onClose, onDone }: Props) {
     try {
       await ChallengeApi.create({
         opponentId: opponent.id,
+        gameType,
         message: message.trim() || undefined,
         venueId: venueId ? Number(venueId) : undefined,
       })
@@ -60,7 +66,7 @@ export function ChallengeModal({ opponent, open, onClose, onDone }: Props) {
   return (
     <Modal open={open} onClose={close} title="Dəvət göndər">
       <div className="mb-5 flex items-center gap-3.5 rounded-xl border border-rail bg-cream p-3.5">
-        <Avatar name={opponent.fullName} color={opponent.avatarColor} size={46} />
+        <Avatar name={opponent.fullName} color={opponent.avatarColor} src={opponent.avatarUrl} size={46} />
         <div className="min-w-0">
           <div className="truncate font-semibold text-ink-900">{opponent.fullName}</div>
           <div className="truncate text-sm text-ink-500">
@@ -86,6 +92,16 @@ export function ChallengeModal({ opponent, open, onClose, onDone }: Props) {
         </div>
       ) : (
         <div className="space-y-4">
+          <Field label="Oyun növü" hint="Dəvət bu intizam üzrə göndəriləcək">
+            <Select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}>
+              {GAME_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {GAME_TYPE_LABEL[t]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
           <Field label="Məkan" optional hint="Harada oynamaq istədiyinizi bildirin">
             <Select value={venueId} onChange={(e) => setVenueId(e.target.value)}>
               <option value="">Məkan seçilməyib</option>

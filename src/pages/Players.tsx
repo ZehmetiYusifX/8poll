@@ -16,7 +16,14 @@ import {
 import { IconSearch, IconSwords, IconUsers } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import type { PlayerSummary } from '../api/types'
+import { TierBadge } from '../components/TierBadge'
+import {
+  DEFAULT_GAME_TYPE,
+  GAME_TYPES,
+  GAME_TYPE_LABEL,
+  GAME_TYPE_SHORT,
+} from '../constants/gameTypes'
+import type { GameType, PlayerSummary } from '../api/types'
 
 type SortKey = 'rating' | 'games' | 'name'
 
@@ -31,16 +38,29 @@ export function Players() {
   const [players, setPlayers] = useState<PlayerSummary[]>([])
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortKey>('rating')
+  const [gameType, setGameType] = useState<GameType>(DEFAULT_GAME_TYPE)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [challengeTarget, setChallengeTarget] = useState<PlayerSummary | null>(null)
 
+  // Reytinq və liqa seçilmiş intizama görə gəlir — serverdən yenidən çəkilir
   useEffect(() => {
-    PlayerApi.list()
-      .then(setPlayers)
-      .catch((e) => setError(extractErrorMessage(e)))
-      .finally(() => setLoading(false))
-  }, [])
+    let cancelled = false
+    setLoading(true)
+    PlayerApi.list(undefined, gameType)
+      .then((list) => {
+        if (!cancelled) setPlayers(list)
+      })
+      .catch((e) => {
+        if (!cancelled) setError(extractErrorMessage(e))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [gameType])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -61,7 +81,7 @@ export function Players() {
     <div>
       <PageHeader
         title="Oyunçular"
-        subtitle="Rəqib tap, dəvət göndər və reytinq qazan"
+        subtitle={`${GAME_TYPE_LABEL[gameType]} üzrə reytinq və liqa — rəqib tap, dəvət göndər`}
         actions={
           !loading && (
             <span className="text-sm tabular-nums text-ink-400">
@@ -81,7 +101,15 @@ export function Players() {
             aria-label="Oyunçu axtar"
           />
         </div>
-        <Segmented items={SORTS} value={sort} onChange={setSort} label="Sıralama" className="self-start" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Segmented
+            label="Oyun növü"
+            value={gameType}
+            onChange={setGameType}
+            items={GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_SHORT[t] }))}
+          />
+          <Segmented items={SORTS} value={sort} onChange={setSort} label="Sıralama" />
+        </div>
       </div>
 
       {error && <Alert tone="error" className="mb-5">{error}</Alert>}
@@ -112,6 +140,7 @@ export function Players() {
         <ChallengeModal
           opponent={challengeTarget}
           open
+          defaultGameType={gameType}
           onClose={() => setChallengeTarget(null)}
         />
       )}
@@ -135,7 +164,7 @@ function PlayerCard({
     <Card padded={false} interactive className="p-4">
       <div className="flex items-start gap-3">
         <Link to={`/players/${player.id}`} tabIndex={-1} aria-hidden>
-          <Avatar name={player.fullName} color={player.avatarColor} size={46} />
+          <Avatar name={player.fullName} color={player.avatarColor} src={player.avatarUrl} size={46} />
         </Link>
 
         <div className="min-w-0 flex-1">
@@ -150,7 +179,10 @@ function PlayerCard({
               </span>
             )}
           </Link>
-          <div className="truncate text-xs text-ink-400">@{player.username}</div>
+          <div className="mt-0.5 flex items-center gap-2">
+            <span className="truncate text-xs text-ink-400">@{player.username}</span>
+            <TierBadge tier={player.tier} className="shrink-0" />
+          </div>
         </div>
 
         <div className="shrink-0 text-right">

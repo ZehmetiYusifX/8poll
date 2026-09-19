@@ -17,6 +17,7 @@ import {
   Input,
   PageHeader,
   SectionHeader,
+  Select,
   Skeleton,
   Textarea,
   cx,
@@ -33,7 +34,8 @@ import {
 } from '../components/icons'
 import { useToast } from '../components/Toast'
 import { extractErrorMessage, mediaUrl } from '../api/client'
-import type { Venue, Tournament } from '../api/types'
+import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import type { GameType, Venue, Tournament } from '../api/types'
 
 export function VenueProfile() {
   const { id } = useParams()
@@ -491,7 +493,13 @@ function CreateTournamentModal({
   onClose: () => void
   onCreated: () => void
 }) {
-  const [form, setForm] = useState({ name: '', description: '', startAt: '', maxParticipants: 8 })
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    startAt: '',
+    maxParticipants: 8,
+    gameType: DEFAULT_GAME_TYPE as GameType,
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -503,6 +511,7 @@ function CreateTournamentModal({
       await TournamentApi.create({
         name: form.name.trim(),
         venueId,
+        gameType: form.gameType,
         description: form.description.trim() || undefined,
         startAt: form.startAt ? new Date(form.startAt).toISOString() : undefined,
         maxParticipants: form.maxParticipants,
@@ -525,6 +534,19 @@ function CreateTournamentModal({
             placeholder="Yay Kuboku"
             autoFocus
           />
+        </Field>
+
+        <Field label="Oyun növü" hint="Seed sıralaması bu intizamın reytinqinə görə qurulacaq">
+          <Select
+            value={form.gameType}
+            onChange={(e) => setForm((f) => ({ ...f, gameType: e.target.value as GameType }))}
+          >
+            {GAME_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {GAME_TYPE_LABEL[t]}
+              </option>
+            ))}
+          </Select>
         </Field>
 
         <Field label="Təsvir" optional>

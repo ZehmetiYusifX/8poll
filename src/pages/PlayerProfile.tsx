@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { PlayerApi } from '../api'
 import { Avatar } from '../components/Avatar'
 import { Modal } from '../components/Modal'
@@ -19,6 +19,7 @@ import {
   SectionHeader,
   Skeleton,
   Textarea,
+  buttonClass,
   cx,
 } from '../components/ui'
 import { IconPencil, IconPlus, IconSwords, IconTable } from '../components/icons'
@@ -26,7 +27,9 @@ import { useToast } from '../components/Toast'
 import { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { AVATAR_COLORS, formatDate } from '../utils/format'
-import type { Match, Player } from '../api/types'
+import { TierBadge } from '../components/TierBadge'
+import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import type { GameType, Match, Player } from '../api/types'
 
 type Filter = 'all' | 'wins' | 'losses'
 
@@ -40,6 +43,8 @@ export function PlayerProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
+  /** Maç tarixçəsi və reytinq qrafiki bu intizama görə süzülür */
+  const [discipline, setDiscipline] = useState<GameType>(DEFAULT_GAME_TYPE)
   const [challenge, setChallenge] = useState(false)
   const [report, setReport] = useState(false)
   const [edit, setEdit] = useState(false)
@@ -64,9 +69,23 @@ export function PlayerProfile() {
     if (!Number.isNaN(playerId)) load()
   }, [playerId, load])
 
-  const confirmed = useMemo(() => matches.filter((m) => m.status === 'CONFIRMED'), [matches])
+  // Ən çox oynanılan intizamı başlanğıc seçim kimi götür — profilə girən
+  // adam ilk olaraq oyunçunun əsas intizamını görsün.
+  useEffect(() => {
+    if (!player || player.ratings.length === 0) return
+    const main = player.ratings.reduce((a, b) => (b.gamesPlayed > a.gamesPlayed ? b : a))
+    if (main.gamesPlayed > 0) setDiscipline(main.gameType)
+  }, [player])
 
-  /** Bu oyunçunun reytinq gedişatı */
+  const confirmed = useMemo(
+    () => matches.filter((m) => m.status === 'CONFIRMED' && m.gameType === discipline),
+    [matches, discipline],
+  )
+
+  /**
+   * Seçilmiş intizam üzrə reytinq gedişatı. İntizamlar arası qarışıq əyri
+   * mənasız olardı — hər intizamın öz Elo hovuzu var.
+   */
   const history = useMemo(() => {
     if (!player) return []
     return confirmed
@@ -113,7 +132,7 @@ export function PlayerProfile() {
           }}
         >
           <div className="flex items-center gap-4">
-            <Avatar name={player.fullName} color={player.avatarColor} size={68} ring="gold" />
+            <Avatar name={player.fullName} color={player.avatarColor} src={player.avatarUrl} size={68} ring="gold" />
             <div className="min-w-0">
               <h1 className="truncate font-display text-2xl font-semibold leading-tight">
                 {player.fullName}
@@ -127,7 +146,9 @@ export function PlayerProfile() {
 
           <div className="flex items-end gap-5">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">Reytinq</div>
+              <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">
+                Ən yaxşı reytinq
+              </div>
               <div className="font-display text-4xl font-bold leading-none tabular-nums text-gold-200">
                 {player.rating}
               </div>
@@ -136,15 +157,94 @@ export function PlayerProfile() {
           </div>
         </div>
 
-        <dl className="grid grid-cols-2 divide-x divide-y divide-rail border-b border-rail bg-card sm:grid-cols-4 sm:divide-y-0">
-          <ProfileStat label="Oyun" value={player.gamesPlayed} />
-          <ProfileStat label="Qələbə" value={player.wins} tone="win" />
-          <ProfileStat label="Məğlubiyyət" value={player.losses} tone="loss" />
-          <ProfileStat label="Qazanma faizi" value={`${player.winRate}%`} />
-        </dl>
+        {/* İntizamlar üzrə bölgü — profilin əsas cədvəli.
+            Hər intizamın öz reytinqi, statistikası və liqası var. */}
+        <div className="border-b border-rail bg-card">
+          <div className="hidden items-center gap-4 border-b border-rail bg-cream px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400 sm:flex">
+            <span className="flex-1">İntizam</span>
+            <span className="w-24">Liqa</span>
+            <span className="w-24 text-center">Q / M</span>
+            <span className="w-14 text-center">Oyun</span>
+            <span className="w-12 text-center">%</span>
+            <span className="w-20 text-right">Reytinq</span>
+          </div>
+          <ul className="divide-y divide-rail">
+            {GAME_TYPES.map((type) => {
+              const r = player.ratings.find((x) => x.gameType === type)
+              const active = type === discipline
+              return (
+                <li key={type}>
+                  <button
+                    type="button"
+                    onClick={() => setDiscipline(type)}
+                    aria-pressed={active}
+                    className={cx(
+                      'flex w-full items-center gap-4 px-5 py-3 text-left transition-colors',
+                      active ? 'bg-felt-500/10' : 'hover:bg-cream',
+                    )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cx(
+                          'block truncate text-sm',
+                          active ? 'font-semibold text-ink-900' : 'text-ink-700',
+                        )}
+                      >
+                        {GAME_TYPE_LABEL[type]}
+                      </span>
+                      <span className="mt-1 flex items-center gap-2 text-xs text-ink-400 sm:hidden">
+                        <TierBadge tier={r?.tier} />
+                        <span>
+                          {r ? `${r.wins}Q / ${r.losses}M · ${r.gamesPlayed} oyun` : 'Oyun yoxdur'}
+                        </span>
+                      </span>
+                    </span>
+
+                    <span className="hidden w-24 sm:block">
+                      <TierBadge tier={r?.tier} />
+                    </span>
+
+                    <span className="hidden w-24 items-center justify-center gap-1.5 text-sm tabular-nums sm:flex">
+                      <span className="font-semibold text-felt-300">{r?.wins ?? 0}</span>
+                      <span className="text-ink-300">/</span>
+                      <span className="font-semibold text-clay-300">{r?.losses ?? 0}</span>
+                    </span>
+
+                    <span className="hidden w-14 text-center text-sm tabular-nums text-ink-500 sm:block">
+                      {r?.gamesPlayed ?? 0}
+                    </span>
+
+                    <span className="hidden w-12 text-center text-sm tabular-nums text-ink-500 sm:block">
+                      {r?.winRate ?? 0}%
+                    </span>
+
+                    <span className="w-20 text-right font-display text-lg font-semibold tabular-nums text-ink-900">
+                      {r?.rating ?? '—'}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2 bg-cream px-5 py-3">
-          {isMe ? (
+          {!user ? (
+            // Qonaq profilə baxa bilir, amma dəvət/nəticə üçün hesab lazımdır
+            <>
+              <Link
+                to="/login"
+                state={{ from: `/players/${playerId}` }}
+                className={buttonClass('primary', 'md')}
+              >
+                <IconSwords size={16} />
+                Dəvət göndərmək üçün daxil olun
+              </Link>
+              <Link to="/register" className={buttonClass('ghost', 'md')}>
+                Qeydiyyat
+              </Link>
+            </>
+          ) : isMe ? (
             <Button variant="secondary" icon={<IconPencil size={16} />} onClick={() => setEdit(true)}>
               Profili redaktə et
             </Button>
@@ -180,7 +280,7 @@ export function PlayerProfile() {
 
       <section>
         <SectionHeader
-          title="Maç tarixçəsi"
+          title={`Maç tarixçəsi — ${GAME_TYPE_LABEL[discipline]}`}
           count={confirmed.length}
           action={
             confirmed.length > 0 && (
@@ -203,14 +303,16 @@ export function PlayerProfile() {
             icon={<IconTable size={20} />}
             title={
               confirmed.length === 0
-                ? 'Təsdiqlənmiş maç yoxdur'
+                ? `${GAME_TYPE_LABEL[discipline]} üzrə təsdiqlənmiş maç yoxdur`
                 : filter === 'wins'
                   ? 'Qələbə yoxdur'
                   : 'Məğlubiyyət yoxdur'
             }
             hint={
-              confirmed.length === 0 && !isMe
-                ? 'Bu oyunçunu dəvət edin və ilk maçı siz oynayın.'
+              confirmed.length === 0
+                ? isMe
+                  ? 'Yuxarıdakı cədvəldən başqa intizam seçin və ya bu intizamda ilk maçınızı oynayın.'
+                  : 'Bu oyunçunu bu intizamda dəvət edin və ilk maçı siz oynayın.'
                 : undefined
             }
           />
@@ -225,10 +327,16 @@ export function PlayerProfile() {
 
       {!isMe && (
         <>
-          <ChallengeModal opponent={player} open={challenge} onClose={() => setChallenge(false)} />
+          <ChallengeModal
+            opponent={player}
+            open={challenge}
+            defaultGameType={discipline}
+            onClose={() => setChallenge(false)}
+          />
           <ReportMatchModal
             open={report}
             opponent={player}
+            defaultGameType={discipline}
             onClose={() => setReport(false)}
             onDone={() => {
               load()
@@ -250,34 +358,6 @@ export function PlayerProfile() {
           }}
         />
       )}
-    </div>
-  )
-}
-
-function ProfileStat({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string
-  value: number | string
-  tone?: 'default' | 'win' | 'loss'
-}) {
-  return (
-    <div className="px-3 py-4 text-center">
-      <dd
-        className={cx(
-          'font-display text-xl font-semibold tabular-nums',
-          tone === 'win' && 'text-felt-300',
-          tone === 'loss' && 'text-clay-300',
-          tone === 'default' && 'text-ink-900',
-        )}
-      >
-        {value}
-      </dd>
-      <dt className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.07em] text-ink-400">
-        {label}
-      </dt>
     </div>
   )
 }
@@ -325,8 +405,11 @@ function EditProfileModal({
   const [fullName, setFullName] = useState(player.fullName)
   const [bio, setBio] = useState(player.bio ?? '')
   const [color, setColor] = useState(player.avatarColor ?? AVATAR_COLORS[0])
+  const [avatarUrl, setAvatarUrl] = useState(player.avatarUrl)
+  const [photoBusy, setPhotoBusy] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
 
   // Modal hər açılışda cari dəyərlərlə başlasın
   useEffect(() => {
@@ -334,8 +417,46 @@ function EditProfileModal({
     setFullName(player.fullName)
     setBio(player.bio ?? '')
     setColor(player.avatarColor ?? AVATAR_COLORS[0])
+    setAvatarUrl(player.avatarUrl)
     setError('')
   }, [open, player])
+
+  /*
+   * Şəkil ayrıca endpoint-ə gedir və dərhal yadda saxlanılır — "Yadda saxla"
+   * düyməsini gözləmir. Multipart sorğunu mətn sahələri ilə eyni tranzaksiyaya
+   * salmaq lazımsız mürəkkəblik yaradardı.
+   */
+  const pickPhoto = async (file: File | undefined) => {
+    if (!file) return
+    setPhotoBusy(true)
+    setError('')
+    try {
+      const updated = await PlayerApi.uploadAvatar(file)
+      setAvatarUrl(updated.avatarUrl)
+      onSaved(updated)
+      toast.success('Profil şəkli yeniləndi')
+    } catch (e) {
+      setError(extractErrorMessage(e))
+    } finally {
+      setPhotoBusy(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  const removePhoto = async () => {
+    setPhotoBusy(true)
+    setError('')
+    try {
+      const updated = await PlayerApi.removeAvatar()
+      setAvatarUrl(null)
+      onSaved(updated)
+      toast.success('Profil şəkli silindi')
+    } catch (e) {
+      setError(extractErrorMessage(e))
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
 
   const save = async () => {
     if (fullName.trim().length < 2) return setError('Ad ən azı 2 simvol olmalıdır')
@@ -361,10 +482,37 @@ function EditProfileModal({
     <Modal open={open} onClose={onClose} title="Profili redaktə et">
       <div className="space-y-4">
         <div className="flex items-center gap-3.5 rounded-lg border border-rail bg-cream p-3">
-          <Avatar name={fullName || player.fullName} color={color} size={48} />
-          <div className="min-w-0 text-sm">
+          <Avatar name={fullName || player.fullName} color={color} src={avatarUrl} size={48} />
+          <div className="min-w-0 flex-1 text-sm">
             <div className="truncate font-semibold text-ink-900">{fullName || player.fullName}</div>
             <div className="text-ink-400">@{player.username}</div>
+          </div>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => pickPhoto(e.target.files?.[0])}
+          />
+          <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={photoBusy}
+              className="font-semibold text-felt-300 transition-colors hover:text-felt-200 disabled:opacity-50"
+            >
+              {photoBusy ? 'Gözləyin…' : avatarUrl ? 'Şəkli dəyiş' : 'Şəkil yüklə'}
+            </button>
+            {avatarUrl && !photoBusy && (
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="text-ink-400 transition-colors hover:text-clay-300"
+              >
+                Sil
+              </button>
+            )}
           </div>
         </div>
 
@@ -385,6 +533,11 @@ function EditProfileModal({
         <div>
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
             Avatar rəngi
+            {avatarUrl && (
+              <span className="ml-1.5 font-normal normal-case tracking-normal text-ink-400">
+                — şəkil silinsə istifadə olunacaq
+              </span>
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
             {AVATAR_COLORS.map((c) => (

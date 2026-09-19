@@ -33,6 +33,7 @@ import { ChallengeApi, LeaderboardApi, MatchApi } from '../api'
 import { extractErrorMessage } from '../api/client'
 import type { Challenge, Match } from '../api/types'
 import { timeAgo } from '../utils/format'
+import { DEFAULT_GAME_TYPE, GAME_TYPE_LABEL, GAME_TYPE_SHORT } from '../constants/gameTypes'
 
 export function Dashboard() {
   const { user, refresh } = useAuth()
@@ -54,7 +55,7 @@ export function Dashboard() {
         MatchApi.pending(),
         ChallengeApi.incoming(),
         MatchApi.mine(),
-        LeaderboardApi.get(200).catch(() => []),
+        LeaderboardApi.get({ limit: 200 }).catch(() => []),
       ])
       setPending(p)
       setIncoming(inc.filter((c) => c.status === 'PENDING'))
@@ -157,7 +158,7 @@ export function Dashboard() {
           />
 
           <div className="relative flex items-center gap-4">
-            <Avatar name={user.fullName} color={user.avatarColor} size={60} ring="gold" />
+            <Avatar name={user.fullName} color={user.avatarColor} src={user.avatarUrl} size={60} ring="gold" />
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.12em] text-felt-200/70">Xoş gəldiniz</p>
               <h1 className="truncate font-display text-2xl font-semibold leading-tight">
@@ -169,9 +170,15 @@ export function Dashboard() {
                   <Skeleton className="h-4 w-16 opacity-30" />
                 ) : (
                   rank && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gold-400/20 px-2 py-0.5 font-semibold text-gold-200">
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full bg-gold-400/20 px-2 py-0.5 font-semibold text-gold-200"
+                      title={`${GAME_TYPE_LABEL[DEFAULT_GAME_TYPE]} reytinq cədvəlindəki yeriniz`}
+                    >
                       <IconTrophy size={11} />
                       {rank.place}. yer / {rank.total}
+                      <span className="font-normal text-gold-200/70">
+                        · {GAME_TYPE_SHORT[DEFAULT_GAME_TYPE]}
+                      </span>
                     </span>
                   )
                 )}
@@ -181,7 +188,9 @@ export function Dashboard() {
 
           <div className="relative flex items-end gap-5">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">Reytinq</div>
+              <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">
+                Ən yaxşı reytinq
+              </div>
               <div className="font-display text-4xl font-bold leading-none tabular-nums text-gold-400">
                 {user.rating}
               </div>
@@ -241,7 +250,7 @@ export function Dashboard() {
                   tone="confirm"
                   badge={<IconCheck size={10} />}
                   avatar={
-                    <Avatar name={m.reporter.fullName} color={m.reporter.avatarColor} size={42} />
+                    <Avatar name={m.reporter.fullName} color={m.reporter.avatarColor} src={m.reporter.avatarUrl} size={42} />
                   }
                   title={
                     <>
@@ -297,7 +306,7 @@ export function Dashboard() {
                   tone="challenge"
                   badge={<IconSwords size={10} />}
                   avatar={
-                    <Avatar name={c.challenger.fullName} color={c.challenger.avatarColor} size={42} />
+                    <Avatar name={c.challenger.fullName} color={c.challenger.avatarColor} src={c.challenger.avatarUrl} size={42} />
                   }
                   title={
                     <>

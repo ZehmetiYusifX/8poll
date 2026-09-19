@@ -125,7 +125,7 @@ export function Matches() {
                     tone="confirm"
                     badge={<IconCheck size={10} />}
                     avatar={
-                      <Avatar name={m.reporter.fullName} color={m.reporter.avatarColor} size={42} />
+                      <Avatar name={m.reporter.fullName} color={m.reporter.avatarColor} src={m.reporter.avatarUrl} size={42} />
                     }
                     title={
                       <>

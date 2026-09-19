@@ -251,6 +251,15 @@ export const IconMedal = (p: IconProps) => (
   </Svg>
 )
 
+/** Akademiya — məzun papağı; öyrənmə bölməsinin nişanı */
+export const IconAcademy = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 4 2.5 8.6 12 13.2l9.5-4.6L12 4Z" />
+    <path d="M6.5 10.8V16c0 1.7 2.5 3 5.5 3s5.5-1.3 5.5-3v-5.2" />
+    <path d="M21.5 8.6v5.6" />
+  </Svg>
+)
+
 export const IconBell = (p: IconProps) => (
   <Svg {...p}>
     <path d="M6 10a6 6 0 1 1 12 0c0 3.5 1 5 1.6 5.8a.6.6 0 0 1-.5 1H4.9a.6.6 0 0 1-.5-1C5 15 6 13.5 6 10Z" />

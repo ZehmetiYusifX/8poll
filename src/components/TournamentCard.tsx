@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { Badge, Card, cx } from './ui'
 import type { BadgeTone } from './ui'
-import { IconCalendar, IconPin, IconTrophy, IconUsers } from './icons'
+import { IconCalendar, IconPin, IconTable, IconTrophy, IconUsers } from './icons'
 import { formatDate, timeUntil } from '../utils/format'
+import { GAME_TYPE_LABEL } from '../constants/gameTypes'
 import type { Tournament, TournamentStatus } from '../api/types'
 
 export const statusMeta: Record<TournamentStatus, { text: string; tone: BadgeTone; bar: string }> = {
@@ -38,6 +39,11 @@ export function TournamentCard({
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500">
+          {/* Turnirin intizamı — seed sıralaması bu reytinqə görə qurulur */}
+          <span className="inline-flex items-center gap-1">
+            <IconTable size={13} className="text-ink-400" />
+            {GAME_TYPE_LABEL[t.gameType]}
+          </span>
           {!hideVenue && (
             <span className="inline-flex items-center gap-1">
               <IconPin size={13} className="text-ink-400" />

@@ -18,7 +18,8 @@ import { IconCheck, IconPin, IconPlus, IconSwords, IconUsers, IconX } from '../c
 import { useToast } from '../components/Toast'
 import { extractErrorMessage } from '../api/client'
 import { timeAgo } from '../utils/format'
-import type { Challenge, ChallengeStatus, PlayerSummary } from '../api/types'
+import { GAME_TYPE_LABEL } from '../constants/gameTypes'
+import type { Challenge, ChallengeStatus, GameType, PlayerSummary } from '../api/types'
 
 const STATUS: Record<ChallengeStatus, { text: string; tone: BadgeTone }> = {
   PENDING: { text: 'Cavab gözləyir', tone: 'yellow' },
@@ -38,9 +39,11 @@ export function Challenges() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState('')
-  const [reportFor, setReportFor] = useState<{ opponent: PlayerSummary; challengeId: number } | null>(
-    null,
-  )
+  const [reportFor, setReportFor] = useState<{
+    opponent: PlayerSummary
+    challengeId: number
+    gameType: GameType
+  } | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -136,7 +139,7 @@ export function Challenges() {
                 badge={isPending ? <IconSwords size={10} /> : undefined}
                 avatar={
                   <Link to={`/players/${other.id}`} tabIndex={-1} aria-hidden>
-                    <Avatar name={other.fullName} color={other.avatarColor} size={44} />
+                    <Avatar name={other.fullName} color={other.avatarColor} src={other.avatarUrl} size={44} />
                   </Link>
                 }
                 title={
@@ -151,7 +154,8 @@ export function Challenges() {
                   <>
                     <span>@{other.username}</span>
                     <span aria-hidden>·</span>
-                    <span className="tabular-nums">{other.rating} xal</span>
+                    {/* Dəvətin intizamı — nəticə də bu intizamda qeyd olunacaq */}
+                    <span className="text-ink-500">{GAME_TYPE_LABEL[c.gameType]}</span>
                     <span aria-hidden>·</span>
                     <span>{timeAgo(c.createdAt)}</span>
                     {c.venue && (
@@ -207,7 +211,13 @@ export function Challenges() {
                         <Button
                           size="sm"
                           icon={<IconPlus size={15} />}
-                          onClick={() => setReportFor({ opponent: other, challengeId: c.id })}
+                          onClick={() =>
+                            setReportFor({
+                              opponent: other,
+                              challengeId: c.id,
+                              gameType: c.gameType,
+                            })
+                          }
                         >
                           Nəticə daxil et
                         </Button>
@@ -228,6 +238,7 @@ export function Challenges() {
           open
           opponent={reportFor.opponent}
           challengeId={reportFor.challengeId}
+          lockedGameType={reportFor.gameType}
           onClose={() => setReportFor(null)}
           onDone={load}
         />

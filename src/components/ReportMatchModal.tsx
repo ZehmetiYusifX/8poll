@@ -6,7 +6,8 @@ import { IconCheck, IconMinus, IconPlus } from './icons'
 import { MatchApi, PlayerApi } from '../api'
 import { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import type { PlayerSummary, Player } from '../api/types'
+import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import type { GameType, PlayerSummary, Player } from '../api/types'
 
 interface Props {
   open: boolean
@@ -15,13 +16,28 @@ interface Props {
   /** Əvvəlcədən seçilmiş rəqib (məs. qəbul edilmiş dəvətdən) */
   opponent?: PlayerSummary | Player
   challengeId?: number
+  /** Əvvəlcədən seçilmiş intizam. Dəvətdən gəlirsə dəyişdirilə bilməz. */
+  defaultGameType?: GameType
+  /** Dəvətin intizamı — seçim kilidlənir, çünki backend uyğunluğu yoxlayır */
+  lockedGameType?: GameType
 }
 
-export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId }: Props) {
+export function ReportMatchModal({
+  open,
+  onClose,
+  onDone,
+  opponent,
+  challengeId,
+  defaultGameType,
+  lockedGameType,
+}: Props) {
   const { user } = useAuth()
 
   const [players, setPlayers] = useState<PlayerSummary[]>([])
   const [opponentId, setOpponentId] = useState<number | undefined>(opponent?.id)
+  const [gameType, setGameType] = useState<GameType>(
+    lockedGameType ?? defaultGameType ?? DEFAULT_GAME_TYPE,
+  )
   const [myScore, setMyScore] = useState(0)
   const [theirScore, setTheirScore] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -31,6 +47,11 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
   useEffect(() => {
     setOpponentId(opponent?.id)
   }, [opponent])
+
+  // Modal hər açılışda cari intizamla başlasın
+  useEffect(() => {
+    if (open) setGameType(lockedGameType ?? defaultGameType ?? DEFAULT_GAME_TYPE)
+  }, [open, lockedGameType, defaultGameType])
 
   useEffect(() => {
     if (!open || opponent) return
@@ -49,7 +70,13 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
 
     setLoading(true)
     try {
-      await MatchApi.report({ opponentId, myScore, opponentScore: theirScore, challengeId })
+      await MatchApi.report({
+        opponentId,
+        gameType,
+        myScore,
+        opponentScore: theirScore,
+        challengeId,
+      })
       setDone(true)
       onDone?.()
     } catch (e) {
@@ -85,7 +112,8 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
             </span>
             <p className="font-medium text-felt-300">Nəticə qeydə alındı</p>
             <p className="mx-auto mt-1 max-w-xs text-sm text-felt-300/80">
-              <b>{opponentName}</b> təsdiqlədikdən sonra hər ikinizin Elo reytinqi yenilənəcək.
+              <b>{opponentName}</b> təsdiqlədikdən sonra hər ikinizin{' '}
+              <b>{GAME_TYPE_LABEL[gameType]}</b> reytinqi yenilənəcək.
             </p>
           </div>
           <Button variant="secondary" block onClick={close}>
@@ -110,6 +138,28 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
             </Field>
           )}
 
+          {/* Reytinq yalnız seçilmiş intizama tətbiq olunur */}
+          <Field
+            label="Oyun növü"
+            hint={
+              lockedGameType
+                ? 'Dəvətin intizamı — dəyişdirilə bilməz'
+                : 'Reytinq yalnız bu intizam üzrə dəyişəcək'
+            }
+          >
+            <Select
+              value={gameType}
+              disabled={!!lockedGameType}
+              onChange={(e) => setGameType(e.target.value as GameType)}
+            >
+              {GAME_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {GAME_TYPE_LABEL[t]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
           {/* Hesab girişi */}
           <div className="rounded-xl border border-rail bg-cream p-4">
             <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 sm:gap-3">
@@ -117,6 +167,7 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
                 name={user?.fullName ?? 'Siz'}
                 sublabel="Siz"
                 color={user?.avatarColor}
+                avatarUrl={user?.avatarUrl}
                 value={myScore}
                 onChange={setMyScore}
                 winning={myScore !== theirScore && iWon}
@@ -126,6 +177,7 @@ export function ReportMatchModal({ open, onClose, onDone, opponent, challengeId 
                 name={selected?.fullName ?? 'Rəqib'}
                 sublabel={selected ? `@${selected.username}` : 'seçilməyib'}
                 color={selected?.avatarColor}
+                avatarUrl={selected?.avatarUrl}
                 value={theirScore}
                 onChange={setTheirScore}
                 winning={myScore !== theirScore && !iWon}
@@ -174,6 +226,7 @@ function ScoreColumn({
   name,
   sublabel,
   color,
+  avatarUrl,
   value,
   onChange,
   winning,
@@ -181,6 +234,7 @@ function ScoreColumn({
   name: string
   sublabel: string
   color?: string | null
+  avatarUrl?: string | null
   value: number
   onChange: (v: number) => void
   winning: boolean
@@ -190,7 +244,7 @@ function ScoreColumn({
   return (
     <div className="min-w-0 text-center">
       <div className="mb-2 flex flex-col items-center gap-1.5">
-        <Avatar name={name} color={color} size={36} ring={winning ? 'gold' : 'none'} />
+        <Avatar name={name} color={color} src={avatarUrl} size={36} ring={winning ? 'gold' : 'none'} />
         <div className="min-w-0 max-w-full">
           <div className="truncate text-xs font-semibold text-ink-800">{name}</div>
           <div className="truncate text-[11px] text-ink-400">{sublabel}</div>

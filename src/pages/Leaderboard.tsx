@@ -2,11 +2,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LeaderboardApi } from '../api'
 import { Avatar } from '../components/Avatar'
-import { Alert, Card, Empty, Input, ListSkeleton, PageHeader, cx } from '../components/ui'
+import { TierBadge } from '../components/TierBadge'
+import { Alert, Card, Empty, Input, ListSkeleton, PageHeader, Segmented, cx } from '../components/ui'
 import { IconSearch, IconTrophy, IconUsers } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import type { LeaderboardEntry } from '../api/types'
+import {
+  DEFAULT_GAME_TYPE,
+  GAME_TYPES,
+  GAME_TYPE_LABEL,
+  GAME_TYPE_SHORT,
+  LEAGUE_FILTER_LABEL,
+  type LeagueFilter,
+} from '../constants/gameTypes'
+import type { GameType, LeaderboardEntry } from '../api/types'
 
 /**
  * İlk üç yer üçün medal rəngləri. Tünd səthdə metal parıltısı açıq mətnlə
@@ -21,16 +30,36 @@ const MEDAL: Record<number, { ring: string; text: string; bg: string; label: str
 export function Leaderboard() {
   const { user } = useAuth()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [gameType, setGameType] = useState<GameType>(DEFAULT_GAME_TYPE)
+  const [league, setLeague] = useState<LeagueFilter>('ALL')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Hər intizamın və liqanın öz cədvəli var — filtr dəyişəndə serverdən
+  // yenidən çəkilir, çünki sıralama backend-də hesablanır.
   useEffect(() => {
-    LeaderboardApi.get(100)
-      .then(setEntries)
-      .catch((e) => setError(extractErrorMessage(e)))
-      .finally(() => setLoading(false))
-  }, [])
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    LeaderboardApi.get({
+      gameType,
+      league: league === 'ALL' ? undefined : league,
+      limit: 100,
+    })
+      .then((data) => {
+        if (!cancelled) setEntries(data)
+      })
+      .catch((e) => {
+        if (!cancelled) setError(extractErrorMessage(e))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [gameType, league])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -48,7 +77,7 @@ export function Leaderboard() {
       <PageHeader
         eyebrow="Elo reytinqi"
         title="Reytinq cədvəli"
-        subtitle="Təsdiqlənmiş maçlar əsasında hesablanan sıralama"
+        subtitle={`${GAME_TYPE_LABEL[gameType]} üzrə təsdiqlənmiş maçlar əsasında hesablanan sıralama`}
         actions={
           myEntry && (
             <div className="flex items-center gap-2.5 rounded-lg border border-rail bg-card px-3.5 py-2 shadow-xs">
@@ -62,6 +91,26 @@ export function Leaderboard() {
         }
       />
 
+      {/* Filtrlər boş nəticədə də görünməlidir — əks halda oyunçu boş
+          tabdan geri qayıda bilməz. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Segmented
+          label="Oyun növü"
+          value={gameType}
+          onChange={setGameType}
+          items={GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_SHORT[t] }))}
+        />
+        <Segmented
+          label="Liqa"
+          value={league}
+          onChange={setLeague}
+          items={(['ALL', 'AMATEUR', 'PROFESSIONAL'] as LeagueFilter[]).map((l) => ({
+            value: l,
+            label: LEAGUE_FILTER_LABEL[l],
+          }))}
+        />
+      </div>
+
       {error && <Alert tone="error" className="mb-5">{error}</Alert>}
 
       {loading ? (
@@ -69,7 +118,11 @@ export function Leaderboard() {
       ) : entries.length === 0 ? (
         <Empty
           icon={<IconTrophy size={20} />}
-          title="Cədvəl hələ boşdur"
+          title={
+            league === 'ALL'
+              ? `${GAME_TYPE_LABEL[gameType]} üzrə cədvəl hələ boşdur`
+              : `${GAME_TYPE_LABEL[gameType]} üzrə ${LEAGUE_FILTER_LABEL[league].toLowerCase()} liqada oyunçu yoxdur`
+          }
           hint="İlk təsdiqlənmiş maçdan sonra sıralama formalaşacaq."
         />
       ) : (
@@ -122,13 +175,14 @@ export function Leaderboard() {
                           {rank}
                         </span>
 
-                        <Avatar name={player.fullName} color={player.avatarColor} size={40} />
+                        <Avatar name={player.fullName} color={player.avatarColor} src={player.avatarUrl} size={40} />
 
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-2">
                             <span className="truncate font-semibold text-ink-900">
                               {player.fullName}
                             </span>
+                            <TierBadge tier={player.tier} className="shrink-0" />
                             {isMe && (
                               <span className="shrink-0 rounded-full bg-felt-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ivory">
                                 Siz
