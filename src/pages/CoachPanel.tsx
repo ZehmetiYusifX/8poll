@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AcademyApi, CoachApi, VenueApi } from '../api'
+import { AcademyApi, VenueApi } from '../api'
 import { Avatar } from '../components/Avatar'
 import { ActionCard } from '../components/ActionCard'
 import { Modal } from '../components/Modal'

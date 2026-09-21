@@ -4,7 +4,7 @@ import { CoachApi } from '../api'
 import { useAuth } from '../context/AuthContext'
 import { Avatar } from '../components/Avatar'
 import { TierBadge } from '../components/TierBadge'
-import { PackageCard, PackageGridSkeleton } from '../components/academy'
+import { PackageCard } from '../components/academy'
 import {
   Alert,
   Badge,
