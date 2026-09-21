@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom'
 import { Badge, Card, cx } from './ui'
 import type { BadgeTone } from './ui'
 import { IconCalendar, IconPin, IconTable, IconTrophy, IconUsers } from './icons'
-import { formatDate, timeUntil } from '../utils/format'
 import { GAME_TYPE_LABEL } from '../constants/gameTypes'
-import type { Tournament, TournamentStatus } from '../api/types'
+import type { GameType, Tournament, TournamentStatus } from '../api/types'
+import type { LandingLanguage } from '../context/LandingLanguageContext'
+import { localeByLanguage } from '../i18n/landing'
 
 export const statusMeta: Record<TournamentStatus, { text: string; tone: BadgeTone; bar: string }> = {
   REGISTRATION: { text: 'Qeydiyyat açıq', tone: 'green', bar: 'bg-felt-500' },
@@ -13,16 +14,45 @@ export const statusMeta: Record<TournamentStatus, { text: string; tone: BadgeTon
   CANCELLED: { text: 'Ləğv edildi', tone: 'neutral', bar: 'bg-rail-strong' },
 }
 
+const localizedText: Record<LandingLanguage, {
+  status: Record<TournamentStatus, string>
+  participants: string
+  winner: string
+  games: Record<GameType, string>
+}> = {
+  az: {
+    status: { REGISTRATION: 'Qeydiyyat açıq', ONGOING: 'Davam edir', COMPLETED: 'Bitdi', CANCELLED: 'Ləğv edildi' },
+    participants: 'İştirakçılar',
+    winner: 'Qalib',
+    games: GAME_TYPE_LABEL,
+  },
+  en: {
+    status: { REGISTRATION: 'Registration open', ONGOING: 'In progress', COMPLETED: 'Completed', CANCELLED: 'Cancelled' },
+    participants: 'Participants',
+    winner: 'Winner',
+    games: { EIGHT_BALL: '8-ball', RUSSIAN_PYRAMID: 'Russian pyramid', SNOOKER: 'Snooker' },
+  },
+  ru: {
+    status: { REGISTRATION: 'Регистрация открыта', ONGOING: 'Идёт', COMPLETED: 'Завершён', CANCELLED: 'Отменён' },
+    participants: 'Участники',
+    winner: 'Победитель',
+    games: { EIGHT_BALL: 'Пул-8', RUSSIAN_PYRAMID: 'Русская пирамида', SNOOKER: 'Снукер' },
+  },
+}
+
 export function TournamentCard({
   tournament: t,
   hideVenue = false,
+  language = 'az',
 }: {
   tournament: Tournament
   hideVenue?: boolean
+  language?: LandingLanguage
 }) {
-  const st = statusMeta[t.status]
+  const labels = localizedText[language]
+  const st = { ...statusMeta[t.status], text: labels.status[t.status] }
   const fillPct = Math.min(100, Math.round((t.participantCount / t.maxParticipants) * 100))
-  const soon = t.status === 'REGISTRATION' ? timeUntil(t.startAt) : null
+  const soon = t.status === 'REGISTRATION' ? localizedTimeUntil(t.startAt, language) : null
 
   return (
     <Link to={`/tournaments/${t.id}`} className="group block h-full">
@@ -42,7 +72,7 @@ export function TournamentCard({
           {/* Turnirin intizamı — seed sıralaması bu reytinqə görə qurulur */}
           <span className="inline-flex items-center gap-1">
             <IconTable size={13} className="text-ink-400" />
-            {GAME_TYPE_LABEL[t.gameType]}
+            {labels.games[t.gameType]}
           </span>
           {!hideVenue && (
             <span className="inline-flex items-center gap-1">
@@ -53,7 +83,7 @@ export function TournamentCard({
           {t.startAt && (
             <span className="inline-flex items-center gap-1">
               <IconCalendar size={13} className="text-ink-400" />
-              {formatDate(t.startAt)}
+              {localizedDate(t.startAt, language)}
               {soon && <span className="text-felt-300">· {soon}</span>}
             </span>
           )}
@@ -64,7 +94,7 @@ export function TournamentCard({
           <div className="flex items-center justify-between text-xs">
             <span className="inline-flex items-center gap-1 text-ink-500">
               <IconUsers size={13} className="text-ink-400" />
-              İştirakçılar
+              {labels.participants}
             </span>
             <span className="font-semibold tabular-nums text-ink-700">
               {t.participantCount}
@@ -85,11 +115,33 @@ export function TournamentCard({
               <IconTrophy size={13} />
             </span>
             <span className="text-ink-500">
-              Qalib: <b className="font-semibold text-ink-900">{t.winner.fullName}</b>
+              {labels.winner}: <b className="font-semibold text-ink-900">{t.winner.fullName}</b>
             </span>
           </div>
         )}
       </Card>
     </Link>
   )
+}
+
+function localizedDate(iso: string | null, language: LandingLanguage): string {
+  if (!iso) return '—'
+  return new Intl.DateTimeFormat(localeByLanguage[language], {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(iso))
+}
+
+function localizedTimeUntil(iso: string | null, language: LandingLanguage): string | null {
+  if (!iso) return null
+  const diff = new Date(iso).getTime() - Date.now()
+  if (diff <= 0) return null
+
+  const formatter = new Intl.RelativeTimeFormat(localeByLanguage[language], { numeric: 'always' })
+  const minutes = Math.max(1, Math.floor(diff / 60_000))
+  if (minutes < 60) return formatter.format(minutes, 'minute')
+  const hours = Math.floor(diff / 3_600_000)
+  if (hours < 24) return formatter.format(hours, 'hour')
+  return formatter.format(Math.floor(hours / 24), 'day')
 }

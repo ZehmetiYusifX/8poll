@@ -6,11 +6,12 @@ import { LeaderboardApi, MatchApi, PlayerApi, TournamentApi, VenueApi } from '..
 import { Avatar } from '../components/Avatar'
 import { HeroVideo } from '../components/HeroVideo'
 import { TournamentCard } from '../components/TournamentCard'
-import { SLOGAN } from '../components/Brand'
 import { Skeleton, buttonClass, cx } from '../components/ui'
 import { IconArrowRight } from '../components/icons'
-import { timeAgo } from '../utils/format'
 import type { LeaderboardEntry, Match, Tournament, TournamentStatus } from '../api/types'
+import { useLandingLanguage } from '../context/LandingLanguageContext'
+import type { LandingLanguage } from '../context/LandingLanguageContext'
+import { landingCopy, languageOptions, localeByLanguage } from '../i18n/landing'
 
 /*
  * Təqdimat səhifəsi. Qonaq da, üzv də eyni səhifəni görür — fərq yalnız
@@ -28,7 +29,7 @@ import type { LeaderboardEntry, Match, Tournament, TournamentStatus } from '../a
  */
 const HERO_PHOTO: string | null = null
 
-const nf = new Intl.NumberFormat('az-AZ')
+type LandingCopy = (typeof landingCopy)[LandingLanguage]
 
 /** Qeydiyyatı açıq turnirlər önə, ləğv olunanlar sona */
 const STATUS_WEIGHT: Record<TournamentStatus, number> = {
@@ -46,12 +47,22 @@ interface Stats {
 
 export function Landing() {
   const { user } = useAuth()
+  const { language, setLanguage } = useLandingLanguage()
+  const copy = landingCopy[language]
 
   const [board, setBoard] = useState<LeaderboardEntry[]>([])
   const [tournaments, setTournaments] = useState<Tournament[]>([])
   const [recent, setRecent] = useState<Match[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const previousLanguage = document.documentElement.lang
+    document.documentElement.lang = language
+    return () => {
+      document.documentElement.lang = previousLanguage
+    }
+  }, [language])
 
   useEffect(() => {
     let active = true
@@ -89,17 +100,25 @@ export function Landing() {
 
   return (
     <div>
-      <Hero user={user} leader={board[0]} stats={stats} />
+      <LanguageSwitcher language={language} setLanguage={setLanguage} label={copy.languageLabel} />
+
+      <Hero
+        user={user}
+        leader={board[0]}
+        stats={stats}
+        copy={copy}
+        language={language}
+      />
 
       <div className="space-y-16 pt-14 sm:space-y-24 sm:pt-20">
         {/* ── Turnirlər ───────────────────────────────────────── */}
         <section aria-labelledby="turnirler">
           <SectionHead
             id="turnirler"
-            label="Turnirlər"
-            title="Klublarda keçirilən turnirlər"
-            note="Cədvələ baxmaq üçün hesab lazım deyil — yalnız qoşulmaq üçün."
-            action={<QuietLink to="/tournaments">Bütün turnirlər</QuietLink>}
+            label={copy.tournaments.label}
+            title={copy.tournaments.title}
+            note={copy.tournaments.note}
+            action={<QuietLink to="/tournaments">{copy.tournaments.all}</QuietLink>}
           />
 
           {loading ? (
@@ -109,7 +128,7 @@ export function Landing() {
               ))}
             </div>
           ) : featured.length === 0 ? (
-            <Quiet>Klublar yeni turnir elan edən kimi burada görünəcək.</Quiet>
+            <Quiet>{copy.tournaments.empty}</Quiet>
           ) : (
             /* Bir-iki turnir olanda üç sütunluq şəbəkə yarımçıq görünür */
             <div
@@ -123,7 +142,7 @@ export function Landing() {
               )}
             >
               {featured.map((t) => (
-                <TournamentCard key={t.id} tournament={t} />
+                <TournamentCard key={t.id} tournament={t} language={language} />
               ))}
             </div>
           )}
@@ -133,18 +152,18 @@ export function Landing() {
         <section aria-labelledby="reytinq">
           <SectionHead
             id="reytinq"
-            label="Ümumi reytinq"
-            title="Cədvəlin zirvəsi"
-            note="Yalnız hər iki tərəfin təsdiqlədiyi maçlar Elo hesabına düşür."
-            action={<QuietLink to="/leaderboard">Tam cədvəl</QuietLink>}
+            label={copy.ranking.label}
+            title={copy.ranking.title}
+            note={copy.ranking.note}
+            action={<QuietLink to="/leaderboard">{copy.ranking.all}</QuietLink>}
           />
 
           {loading ? (
             <Skeleton className="h-[440px] rounded-xl" />
           ) : board.length === 0 ? (
-            <Quiet>İlk təsdiqlənmiş maçdan sonra sıralama formalaşacaq.</Quiet>
+            <Quiet>{copy.ranking.empty}</Quiet>
           ) : (
-            <LeaderTable board={board} meId={user?.id} />
+            <LeaderTable board={board} meId={user?.id} copy={copy} />
           )}
         </section>
 
@@ -153,9 +172,9 @@ export function Landing() {
           <section aria-labelledby="son-maclar">
             <SectionHead
               id="son-maclar"
-              label="Canlı lent"
-              title="Son təsdiqlənmiş maçlar"
-              note="Nəticə hər iki tərəf təsdiqləyən kimi buraya düşür."
+              label={copy.recent.label}
+              title={copy.recent.title}
+              note={copy.recent.note}
             />
 
             {loading ? (
@@ -163,16 +182,16 @@ export function Landing() {
             ) : (
               <ul className="divide-y divide-rail border-y border-rail">
                 {recent.map((m) => (
-                  <RecentMatch key={m.id} match={m} />
+                  <RecentMatch key={m.id} match={m} language={language} />
                 ))}
               </ul>
             )}
           </section>
         )}
 
-        <HowItWorks />
+        <HowItWorks copy={copy} />
 
-        <ClosingCta user={user} />
+        <ClosingCta user={user} copy={copy} />
       </div>
     </div>
   )
@@ -186,10 +205,14 @@ function Hero({
   user,
   leader,
   stats,
+  copy,
+  language,
 }: {
   user: { fullName: string } | null
   leader?: LeaderboardEntry
   stats: Stats | null
+  copy: LandingCopy
+  language: LandingLanguage
 }) {
   return (
     /*
@@ -267,24 +290,23 @@ function Hero({
           style={{ animationDelay: '60ms' }}
         >
           <span aria-hidden className="rule-gold h-px w-9" />
-          {SLOGAN}
+          {copy.slogan}
         </p>
 
         <h1
           className="mt-7 font-display text-[40px] font-semibold leading-[1.02] tracking-[-0.038em] text-ink-950 animate-lift sm:text-[56px] lg:text-[70px]"
           style={{ animationDelay: '150ms', textShadow: '0 2px 30px rgba(0,0,0,0.55)' }}
         >
-          Masada qalib gəlin.
+          {copy.hero.line1}
           <br />
-          <span className="text-gold-300">Cədvəldə qalın.</span>
+          <span className="text-gold-300">{copy.hero.line2}</span>
         </h1>
 
         <p
           className="mt-7 max-w-md text-[15px] leading-relaxed text-ink-700 animate-lift sm:text-base"
           style={{ animationDelay: '240ms' }}
         >
-          Bilyard klublarının ortaq reytinq və turnir cədvəli. Rəqib çağırın, klubda oynayın,
-          nəticəni təsdiqləyin — Elo qalanını özü hesablayır.
+          {copy.hero.description}
         </p>
 
         <div
@@ -294,23 +316,59 @@ function Hero({
           {user ? (
             <>
               <Link to="/dashboard" className={buttonClass('gold', 'lg', 'px-7')}>
-                Panelə keç
+                {copy.hero.dashboard}
               </Link>
-              <TextLink to="/tournaments">Turnirlərə bax</TextLink>
+              <TextLink to="/tournaments">{copy.hero.tournaments}</TextLink>
             </>
           ) : (
             <>
               <Link to="/register" className={buttonClass('gold', 'lg', 'px-7')}>
-                Pulsuz qeydiyyat
+                {copy.hero.register}
               </Link>
-              <TextLink to="/leaderboard">Əvvəlcə reytinqə baxın</TextLink>
+              <TextLink to="/leaderboard">{copy.hero.leaderboard}</TextLink>
             </>
           )}
         </div>
       </div>
 
-      <HeroFacts leader={leader} stats={stats} />
+      <HeroFacts leader={leader} stats={stats} copy={copy} language={language} />
     </section>
+  )
+}
+
+function LanguageSwitcher({
+  language,
+  setLanguage,
+  label,
+}: {
+  language: LandingLanguage
+  setLanguage: (language: LandingLanguage) => void
+  label: string
+}) {
+  return (
+    <div
+      className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-50 flex rounded-full border border-gold-400/30 bg-felt-950/95 p-1 shadow-xl backdrop-blur-md md:bottom-6 md:right-6"
+      role="group"
+      aria-label={label}
+    >
+      {languageOptions.map((option) => (
+        <button
+          key={option.code}
+          type="button"
+          onClick={() => setLanguage(option.code)}
+          aria-pressed={language === option.code}
+          title={option.name}
+          className={cx(
+            'min-w-10 rounded-full px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] transition-colors',
+            language === option.code
+              ? 'bg-gold-400 text-felt-950'
+              : 'text-felt-100/75 hover:bg-white/10 hover:text-ivory',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -318,10 +376,21 @@ function Hero({
  * Hero-nun alt kənarındakı nazik zolaq — platformanın canlı olduğunun
  * sübutu. Kart deyil, ona görə hero-nun kompozisiyasını pozmur.
  */
-function HeroFacts({ leader, stats }: { leader?: LeaderboardEntry; stats: Stats | null }) {
+function HeroFacts({
+  leader,
+  stats,
+  copy,
+  language,
+}: {
+  leader?: LeaderboardEntry
+  stats: Stats | null
+  copy: LandingCopy
+  language: LandingLanguage
+}) {
+  const nf = new Intl.NumberFormat(localeByLanguage[language])
   const facts: { label: string; value: ReactNode }[] = [
     {
-      label: 'Cədvəlin lideri',
+      label: copy.facts.leader,
       value: leader ? (
         <Link
           to={`/players/${leader.player.id}`}
@@ -335,9 +404,9 @@ function HeroFacts({ leader, stats }: { leader?: LeaderboardEntry; stats: Stats 
         </Link>
       ) : null,
     },
-    { label: 'Oyunçu', value: stats && nf.format(stats.players) },
-    { label: 'Təsdiqlənmiş maç', value: stats && nf.format(stats.matches) },
-    { label: 'Klub', value: stats && nf.format(stats.venues) },
+    { label: copy.facts.players, value: stats && nf.format(stats.players) },
+    { label: copy.facts.matches, value: stats && nf.format(stats.matches) },
+    { label: copy.facts.venues, value: stats && nf.format(stats.venues) },
   ]
 
   return (
@@ -382,16 +451,24 @@ function HeroFacts({ leader, stats }: { leader?: LeaderboardEntry; stats: Stats 
    Reytinq cədvəli
    ═══════════════════════════════════════════════════════════════ */
 
-function LeaderTable({ board, meId }: { board: LeaderboardEntry[]; meId?: number }) {
+function LeaderTable({
+  board,
+  meId,
+  copy,
+}: {
+  board: LeaderboardEntry[]
+  meId?: number
+  copy: LandingCopy
+}) {
   return (
     <div className="border-y border-rail">
       <div className="flex items-center gap-4 border-b border-rail px-2 pb-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-ink-400">
         <span className="w-6 text-center">#</span>
-        <span className="flex-1">Oyunçu</span>
-        <span className="hidden w-24 whitespace-nowrap text-center sm:block" title="Qalib / Məğlub">
-          Q / M
+        <span className="flex-1">{copy.table.player}</span>
+        <span className="hidden w-24 whitespace-nowrap text-center sm:block" title={copy.table.winsLossesTitle}>
+          {copy.table.winsLosses}
         </span>
-        <span className="w-16 text-right sm:w-20">Xal</span>
+        <span className="w-16 text-right sm:w-20">{copy.table.score}</span>
       </div>
 
       <ul className="divide-y divide-rail">
@@ -426,7 +503,7 @@ function LeaderTable({ board, meId }: { board: LeaderboardEntry[]; meId?: number
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-ink-950">
                     {player.fullName}
-                    {isMe && <span className="ml-2 text-xs font-normal text-gold-400"> — siz</span>}
+                    {isMe && <span className="ml-2 text-xs font-normal text-gold-400"> — {copy.table.you}</span>}
                   </span>
                   <span className="mt-0.5 block truncate text-xs text-ink-400">
                     @{player.username}
@@ -461,14 +538,14 @@ function LeaderTable({ board, meId }: { board: LeaderboardEntry[]; meId?: number
  * Lentdəki maç heç kimin baxış bucağından göstərilmir — qalib solda,
  * məğlub sağda. Ona görə perspektivə bağlı `MatchRow` işlədilmir.
  */
-function RecentMatch({ match: m }: { match: Match }) {
+function RecentMatch({ match: m, language }: { match: Match; language: LandingLanguage }) {
   const reporterWon = m.winnerId === m.reporter.id
   const winner = reporterWon ? m.reporter : m.opponent
   const loser = reporterWon ? m.opponent : m.reporter
   const winScore = reporterWon ? m.reporterScore : m.opponentScore
   const loseScore = reporterWon ? m.opponentScore : m.reporterScore
 
-  const meta = [timeAgo(m.confirmedAt ?? m.createdAt), m.venue?.name].filter(Boolean).join(' · ')
+  const meta = [relativeTime(m.confirmedAt ?? m.createdAt, language), m.venue?.name].filter(Boolean).join(' · ')
 
   return (
     <li className="py-3.5">
@@ -513,34 +590,19 @@ function RecentMatch({ match: m }: { match: Match }) {
    Qayda
    ═══════════════════════════════════════════════════════════════ */
 
-const STEPS = [
-  {
-    title: 'Dəvət',
-    text: 'Oyunçular siyahısından rəqib seçirsiniz, məkanı göstərib dəvət göndərirsiniz.',
-  },
-  {
-    title: 'Oyun',
-    text: 'Klubda oynayırsınız. Hesabı tərəflərdən biri platformaya daxil edir.',
-  },
-  {
-    title: 'Təsdiq',
-    text: 'Rəqib nəticəni təsdiqləyir — yalnız bundan sonra Elo yenidən hesablanır.',
-  },
-]
-
-function HowItWorks() {
+function HowItWorks({ copy }: { copy: LandingCopy }) {
   return (
     <section aria-labelledby="qayda">
       <SectionHead
         id="qayda"
-        label="Qayda"
-        title="Nəticəni tək tərəf yaza bilmir"
-        note="Cədvəlin dəyəri onun dürüstlüyündədir. Ona görə hər maç iki imza tələb edir."
+        label={copy.rules.label}
+        title={copy.rules.title}
+        note={copy.rules.note}
       />
 
       {/* Xətlər boşluqdan doğur: gap-px + fon rəngi */}
       <ol className="grid gap-px border-y border-rail bg-rail sm:grid-cols-3">
-        {STEPS.map((step, i) => (
+        {copy.rules.steps.map((step, i) => (
           <li key={step.title} className="bg-paper px-0 py-6 sm:px-6 sm:first:pl-0">
             <span className="font-display text-[11px] font-semibold tracking-[0.22em] text-gold-400/75">
               0{i + 1}
@@ -558,7 +620,7 @@ function HowItWorks() {
    Yekun çağırış
    ═══════════════════════════════════════════════════════════════ */
 
-function ClosingCta({ user }: { user: { fullName: string } | null }) {
+function ClosingCta({ user, copy }: { user: { fullName: string } | null; copy: LandingCopy }) {
   return (
     <section className="felt-weave relative overflow-hidden rounded-[20px] border border-rail bg-felt-950 px-6 py-11 sm:px-12 sm:py-14">
       <span aria-hidden className="rule-gold absolute inset-x-0 top-0 h-px" />
@@ -581,12 +643,12 @@ function ClosingCta({ user }: { user: { fullName: string } | null }) {
       <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <h2 className="max-w-lg font-display text-[28px] font-semibold leading-tight tracking-[-0.025em] text-ink-950 sm:text-[36px]">
-            {user ? 'Növbəti maçınız sizi gözləyir' : 'Cədvəldəki yerinizi bu gün alın'}
+            {user ? copy.cta.memberTitle : copy.cta.guestTitle}
           </h2>
           <p className="mt-3.5 max-w-md text-[15px] leading-relaxed text-felt-100/70">
             {user
-              ? 'Rəqib çağırın, klubunuzun turnirinə qoşulun və reytinqinizi yüksəldin.'
-              : 'Qeydiyyat bir neçə saniyə çəkir. Başlanğıc reytinqiniz 1200 xaldır — qalanını masa həll edir.'}
+              ? copy.cta.memberText
+              : copy.cta.guestText}
           </p>
         </div>
 
@@ -594,17 +656,17 @@ function ClosingCta({ user }: { user: { fullName: string } | null }) {
           {user ? (
             <>
               <Link to="/players" className={buttonClass('gold', 'lg', 'px-6')}>
-                Rəqib tap
+                {copy.cta.findOpponent}
               </Link>
-              <TextLink to="/academy">Dərs paketləri</TextLink>
+              <TextLink to="/academy">{copy.cta.lessons}</TextLink>
             </>
           ) : (
             <>
               <Link to="/register" className={buttonClass('gold', 'lg', 'px-6')}>
-                Hesab yarat
+                {copy.cta.createAccount}
               </Link>
-              <TextLink to="/venues/register">Məkan sahibisiniz?</TextLink>
-              <TextLink to="/coaches/register">Məşqçisiniz?</TextLink>
+              <TextLink to="/venues/register">{copy.cta.venueOwner}</TextLink>
+              <TextLink to="/coaches/register">{copy.cta.coach}</TextLink>
             </>
           )}
         </div>
@@ -616,6 +678,28 @@ function ClosingCta({ user }: { user: { fullName: string } | null }) {
 /* ═══════════════════════════════════════════════════════════════
    Ortaq kiçik hissələr
    ═══════════════════════════════════════════════════════════════ */
+
+function relativeTime(iso: string | null, language: LandingLanguage): string {
+  if (!iso) return '—'
+
+  const date = new Date(iso)
+  const elapsedSeconds = Math.floor((Date.now() - date.getTime()) / 1000)
+  const formatter = new Intl.RelativeTimeFormat(localeByLanguage[language], { numeric: 'auto' })
+
+  if (elapsedSeconds < 60) return formatter.format(-Math.max(0, elapsedSeconds), 'second')
+  const minutes = Math.floor(elapsedSeconds / 60)
+  if (minutes < 60) return formatter.format(-minutes, 'minute')
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return formatter.format(-hours, 'hour')
+  const days = Math.floor(hours / 24)
+  if (days < 30) return formatter.format(-days, 'day')
+
+  return new Intl.DateTimeFormat(localeByLanguage[language], {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
+}
 
 function SectionHead({
   id,
