@@ -10,7 +10,7 @@ import { Register } from './pages/Register'
 import { VenueRegister } from './pages/VenueRegister'
 import { Dashboard } from './pages/Dashboard'
 import { Leaderboard } from './pages/Leaderboard'
-import { Players } from './pages/Players'
+import { Friends } from './pages/Friends'
 import { PlayerProfile } from './pages/PlayerProfile'
 import { Challenges } from './pages/Challenges'
 import { Matches } from './pages/Matches'
@@ -21,6 +21,7 @@ import { Tournaments } from './pages/Tournaments'
 import { TournamentDetail } from './pages/TournamentDetail'
 import { Gallery } from './pages/Gallery'
 import { AdminGallery } from './pages/AdminGallery'
+import { AdminApprovals } from './pages/AdminApprovals'
 import { Academy } from './pages/Academy'
 import { PackageDetail } from './pages/PackageDetail'
 import { Coaches } from './pages/Coaches'
@@ -56,7 +57,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Landing />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/players" element={<Players />} />
+        <Route path="/friends" element={member(<Friends />)} />
         <Route path="/players/:id" element={<PlayerProfile />} />
         <Route path="/venues" element={<Venues />} />
         <Route path="/venues/:id" element={<VenueProfile />} />
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="/venues/mine" element={member(<VenueMine />)} />
 
         <Route path="/admin/gallery" element={<AdminRoute><AdminGallery /></AdminRoute>} />
+        <Route path="/admin/approvals" element={<AdminRoute><AdminApprovals /></AdminRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

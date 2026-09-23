@@ -223,7 +223,7 @@ export function Dashboard() {
           <Button icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
             Nəticə daxil et
           </Button>
-          <Link to="/players" className={buttonClass('secondary', 'md')}>
+          <Link to="/friends" className={buttonClass('secondary', 'md')}>
             <IconUsers size={16} />
             Rəqib tap
           </Link>

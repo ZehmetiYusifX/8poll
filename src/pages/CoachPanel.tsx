@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AcademyApi, VenueApi } from '../api'
+import { AcademyApi, CoachApi, VenueApi } from '../api'
 import { Avatar } from '../components/Avatar'
 import { ActionCard } from '../components/ActionCard'
 import { Modal } from '../components/Modal'
@@ -37,6 +37,7 @@ import {
   formatPrice,
 } from '../constants/academy'
 import type {
+  ApprovalStatus,
   CoachingLevel,
   GameType,
   LessonFormat,
@@ -80,6 +81,7 @@ export function CoachPanel() {
   const [packages, setPackages] = useState<LessonPackage[]>([])
   const [orders, setOrders] = useState<LessonOrder[]>([])
   const [venues, setVenues] = useState<Venue[]>([])
+  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>('PENDING')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -110,7 +112,10 @@ export function CoachPanel() {
   useEffect(() => {
     load()
     VenueApi.list().then(setVenues).catch(() => setVenues([]))
+    CoachApi.me().then((c) => setApprovalStatus(c.approvalStatus)).catch(() => {})
   }, [load])
+
+  const isApproved = approvalStatus === 'APPROVED'
 
   const pendingCount = useMemo(() => orders.filter((o) => o.status === 'PENDING').length, [orders])
 
@@ -216,12 +221,20 @@ export function CoachPanel() {
             <Link to="/coaches">
               <Button variant="ghost">Vitrinə bax</Button>
             </Link>
-            <Button icon={<IconPlus size={16} />} onClick={openCreate}>
+            <Button icon={<IconPlus size={16} />} onClick={openCreate} disabled={!isApproved}>
               Yeni paket
             </Button>
           </>
         }
       />
+
+      {!isApproved && (
+        <Alert tone={approvalStatus === 'REJECTED' ? 'error' : 'info'} className="mb-5">
+          {approvalStatus === 'REJECTED'
+            ? 'Məşqçi hesabınız admin tərəfindən rədd edilib. Ətraflı məlumat üçün dəstəklə əlaqə saxlayın.'
+            : 'Hesabınız admin təsdiqini gözləyir. Təsdiqlənənə qədər paketləriniz akademiya vitrinində görünməyəcək.'}
+        </Alert>
+      )}
 
       <Segmented
         className="mb-5"

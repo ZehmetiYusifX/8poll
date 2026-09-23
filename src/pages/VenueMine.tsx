@@ -31,6 +31,12 @@ export function VenueMine() {
 
       {error && <Alert tone="error" className="mb-5">{error}</Alert>}
 
+      {!loading && venues.some((v) => v.approvalStatus !== 'APPROVED') && (
+        <Alert tone="info" className="mb-5">
+          Təsdiq gözləyən məkanınız var — admin təsdiqləyənə qədər ictimai siyahıda görünməyəcək.
+        </Alert>
+      )}
+
       {loading ? (
         <VenueGridSkeleton count={2} />
       ) : venues.length === 0 ? (
@@ -49,12 +55,17 @@ export function VenueMine() {
           {venues.map((v) => (
             <Link key={v.id} to={`/venues/${v.id}`} className="group">
               <Card padded={false} interactive className="h-full overflow-hidden">
-                <div className="h-40 overflow-hidden">
+                <div className="relative h-40 overflow-hidden">
                   <VenuePhoto
                     src={v.photoUrls[0]}
                     alt={v.name}
                     className="transition-transform duration-500 group-hover:scale-[1.04]"
                   />
+                  {v.approvalStatus !== 'APPROVED' && (
+                    <span className="absolute right-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-ivory">
+                      {v.approvalStatus === 'REJECTED' ? 'Rədd edilib' : 'Təsdiq gözləyir'}
+                    </span>
+                  )}
                 </div>
                 <div className="p-4">
                   <h2 className="truncate font-display text-base font-semibold text-ink-900">

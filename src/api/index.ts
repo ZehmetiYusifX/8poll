@@ -9,6 +9,7 @@ import type {
   CoachingLevel, LessonFormat, LessonPackage, LessonOrder,
   CreateLessonPackageRequest, UpdateLessonPackageRequest,
   CreateLessonOrderRequest, RespondOrderRequest,
+  FriendRequest, PlayerWithFriendStatus,
 } from './types'
 
 // --- Auth ---
@@ -214,6 +215,31 @@ export const AcademyApi = {
     api.post<LessonOrder>(`/academy/orders/${id}/complete`).then((r) => r.data),
   cancel: (id: number) =>
     api.post<LessonOrder>(`/academy/orders/${id}/cancel`).then((r) => r.data),
+}
+
+// --- Dostlar ---
+export const FriendApi = {
+  list: () => api.get<PlayerSummary[]>('/friends').then((r) => r.data),
+  incoming: () => api.get<FriendRequest[]>('/friends/requests/incoming').then((r) => r.data),
+  outgoing: () => api.get<FriendRequest[]>('/friends/requests/outgoing').then((r) => r.data),
+  send: (receiverId: number) =>
+    api.post<FriendRequest>('/friends/requests', { receiverId }).then((r) => r.data),
+  accept: (id: number) => api.post<FriendRequest>(`/friends/requests/${id}/accept`).then((r) => r.data),
+  decline: (id: number) => api.post<FriendRequest>(`/friends/requests/${id}/decline`).then((r) => r.data),
+  remove: (playerId: number) => api.delete<void>(`/friends/${playerId}`).then((r) => r.data),
+  suggestions: () => api.get<PlayerSummary[]>('/friends/suggestions').then((r) => r.data),
+  search: (q?: string) =>
+    api.get<PlayerWithFriendStatus[]>('/friends/search', { params: q ? { q } : {} }).then((r) => r.data),
+}
+
+// --- Admin təsdiqləri (yalnız ADMIN rolu) ---
+export const AdminApprovalApi = {
+  pendingCoaches: () => api.get<Coach[]>('/admin/approvals/coaches').then((r) => r.data),
+  pendingVenues: () => api.get<Venue[]>('/admin/approvals/venues').then((r) => r.data),
+  approveCoach: (id: number) => api.post<Coach>(`/admin/approvals/coaches/${id}/approve`).then((r) => r.data),
+  rejectCoach: (id: number) => api.post<Coach>(`/admin/approvals/coaches/${id}/reject`).then((r) => r.data),
+  approveVenue: (id: number) => api.post<Venue>(`/admin/approvals/venues/${id}/approve`).then((r) => r.data),
+  rejectVenue: (id: number) => api.post<Venue>(`/admin/approvals/venues/${id}/reject`).then((r) => r.data),
 }
 
 // --- Matches ---

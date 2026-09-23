@@ -84,7 +84,7 @@ export function Challenges() {
         title="Dəvətlər"
         subtitle="Sizə gələn və göndərdiyiniz oyun dəvətləri"
         actions={
-          <Link to="/players">
+          <Link to="/friends">
             <Button variant="secondary" icon={<IconUsers size={16} />}>
               Rəqib tap
             </Button>
@@ -114,12 +114,12 @@ export function Challenges() {
           hint={
             tab === 'incoming'
               ? 'Kimsə sizi oyuna dəvət etdikdə burada görünəcək.'
-              : 'Oyunçular səhifəsindən rəqib seçib dəvət göndərin.'
+              : 'Dostlar səhifəsindən rəqib seçib dəvət göndərin.'
           }
           action={
             tab === 'outgoing' ? (
-              <Link to="/players">
-                <Button icon={<IconUsers size={16} />}>Oyunçulara bax</Button>
+              <Link to="/friends">
+                <Button icon={<IconUsers size={16} />}>Dostlara bax</Button>
               </Link>
             ) : undefined
           }

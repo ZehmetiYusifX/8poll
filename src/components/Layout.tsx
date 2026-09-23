@@ -43,7 +43,6 @@ interface NavItem {
  */
 const PUBLIC_NAV: NavItem[] = [
   { to: '/leaderboard', label: 'Reytinq', icon: IconTrophy, primary: true },
-  { to: '/players', label: 'Oyunçular', short: 'Oyunçu', icon: IconUsers, primary: true },
   { to: '/tournaments', label: 'Turnirlər', short: 'Turnir', icon: IconMedal },
   { to: '/academy', label: 'Akademiya', short: 'Dərs', icon: IconAcademy },
   { to: '/venues', label: 'Məkanlar', short: 'Məkan', icon: IconBuilding },
@@ -51,9 +50,9 @@ const PUBLIC_NAV: NavItem[] = [
 ]
 
 const MEMBER_NAV: NavItem[] = [
+  { to: '/friends', label: 'Dostlar', short: 'Dostlar', icon: IconUsers, primary: true },
   { to: '/challenges', label: 'Dəvətlər', short: 'Dəvət', icon: IconSwords, counter: 'challenges', primary: true },
   { to: '/matches', label: 'Maçlarım', short: 'Maçlar', icon: IconTable, counter: 'matches', primary: true },
-  { to: '/academy/mine', label: 'Kurslarım', icon: IconAcademy },
 ]
 
 const POLL_MS = 30_000
@@ -75,7 +74,6 @@ export function Layout() {
   const publicNav: NavItem[] = isLanding
     ? [
         { to: '/leaderboard', label: shell.ranking, icon: IconTrophy, primary: true },
-        { to: '/players', label: shell.players, short: shell.playerShort, icon: IconUsers, primary: true },
         { to: '/tournaments', label: shell.tournaments, short: shell.tournamentShort, icon: IconMedal },
         { to: '/academy', label: shell.academy, short: shell.lessonShort, icon: IconAcademy },
         { to: '/venues', label: shell.venues, short: shell.venueShort, icon: IconBuilding },
@@ -85,9 +83,9 @@ export function Layout() {
 
   const memberNav: NavItem[] = isLanding
     ? [
+        { to: '/friends', label: shell.players, short: shell.playerShort, icon: IconUsers, primary: true },
         { to: '/challenges', label: shell.challenges, short: shell.challengeShort, icon: IconSwords, counter: 'challenges', primary: true },
         { to: '/matches', label: shell.matches, short: shell.matchesShort, icon: IconTable, counter: 'matches', primary: true },
-        { to: '/academy/mine', label: shell.courses, icon: IconAcademy },
       ]
     : MEMBER_NAV
 
@@ -104,7 +102,10 @@ export function Layout() {
           ? [{ to: '/venues/mine', label: isLanding ? shell.myVenue : 'Məkanım', icon: IconBuilding }]
           : []),
         ...(user.role === 'COACH'
-          ? [{ to: '/coaches/panel', label: isLanding ? shell.coachPanel : 'Məşqçi panelim', icon: IconAcademy }]
+          ? [
+              { to: '/coaches/panel', label: isLanding ? shell.coachPanel : 'Məşqçi panelim', icon: IconAcademy },
+              { to: '/academy/mine', label: isLanding ? shell.courses : 'Kurslarım', icon: IconAcademy },
+            ]
           : []),
       ]
     : // Qonaqda üzvə aid bölmə yoxdur, ona görə açıq bölmələr alt panelə sığır
@@ -282,6 +283,9 @@ export function Layout() {
                     <div className="border-t border-rail py-1">
                       <MenuLink to="/admin/gallery" icon={<IconImage size={17} />}>
                         {isLanding ? shell.galleryAdmin : 'Qalereya idarəetməsi'}
+                      </MenuLink>
+                      <MenuLink to="/admin/approvals" icon={<IconUsers size={17} />}>
+                        Təsdiq gözləyənlər
                       </MenuLink>
                     </div>
                   )}

@@ -19,7 +19,7 @@ export const landingCopy = {
     shell: {
       skip: 'Əsas məzmuna keç', nav: 'Əsas naviqasiya', sections: 'Bölmələr',
       home: 'Ana səhifə', homeShort: 'Əsas', dashboard: 'Panel',
-      ranking: 'Reytinq', players: 'Oyunçular', playerShort: 'Oyunçu', tournaments: 'Turnirlər', tournamentShort: 'Turnir',
+      ranking: 'Reytinq', players: 'Dostlar', playerShort: 'Dostlar', tournaments: 'Turnirlər', tournamentShort: 'Turnir',
       academy: 'Akademiya', lessonShort: 'Dərs', venues: 'Məkanlar', venueShort: 'Məkan', gallery: 'Qalereya', photoShort: 'Şəkil',
       challenges: 'Dəvətlər', challengeShort: 'Dəvət', matches: 'Maçlarım', matchesShort: 'Maçlar', courses: 'Kurslarım',
       myVenue: 'Məkanım', coachPanel: 'Məşqçi panelim', login: 'Daxil ol', register: 'Qeydiyyat',
@@ -84,7 +84,7 @@ export const landingCopy = {
     shell: {
       skip: 'Skip to main content', nav: 'Main navigation', sections: 'Sections',
       home: 'Home', homeShort: 'Home', dashboard: 'Dashboard',
-      ranking: 'Ranking', players: 'Players', playerShort: 'Players', tournaments: 'Tournaments', tournamentShort: 'Events',
+      ranking: 'Ranking', players: 'Friends', playerShort: 'Friends', tournaments: 'Tournaments', tournamentShort: 'Events',
       academy: 'Academy', lessonShort: 'Learn', venues: 'Venues', venueShort: 'Venues', gallery: 'Gallery', photoShort: 'Photos',
       challenges: 'Challenges', challengeShort: 'Challenge', matches: 'My matches', matchesShort: 'Matches', courses: 'My courses',
       myVenue: 'My venue', coachPanel: 'Coach dashboard', login: 'Log in', register: 'Register',
@@ -149,7 +149,7 @@ export const landingCopy = {
     shell: {
       skip: 'Перейти к содержанию', nav: 'Основная навигация', sections: 'Разделы',
       home: 'Главная', homeShort: 'Главная', dashboard: 'Кабинет',
-      ranking: 'Рейтинг', players: 'Игроки', playerShort: 'Игроки', tournaments: 'Турниры', tournamentShort: 'Турниры',
+      ranking: 'Рейтинг', players: 'Друзья', playerShort: 'Друзья', tournaments: 'Турниры', tournamentShort: 'Турниры',
       academy: 'Академия', lessonShort: 'Уроки', venues: 'Клубы', venueShort: 'Клубы', gallery: 'Галерея', photoShort: 'Фото',
       challenges: 'Вызовы', challengeShort: 'Вызов', matches: 'Мои матчи', matchesShort: 'Матчи', courses: 'Мои курсы',
       myVenue: 'Мой клуб', coachPanel: 'Кабинет тренера', login: 'Войти', register: 'Регистрация',

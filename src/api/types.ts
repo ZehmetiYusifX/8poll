@@ -13,6 +13,9 @@ export type ChallengeDirection = 'INCOMING' | 'OUTGOING'
 
 export type Role = 'PLAYER' | 'VENUE_OWNER' | 'COACH' | 'ADMIN'
 
+/** Admin tərəfindən təsdiq vəziyyəti — məşqçi/məkan profilləri üçün */
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
 /** Bilyard intizamları — hər birinin öz müstəqil reytinqi var */
 export type GameType = 'EIGHT_BALL' | 'RUSSIAN_PYRAMID' | 'SNOOKER'
 
@@ -106,6 +109,7 @@ export interface Venue {
   phone: string | null
   owner: PlayerSummary
   photoUrls: string[]
+  approvalStatus: ApprovalStatus
   createdAt: string
 }
 
@@ -321,6 +325,7 @@ export interface Coach {
   gameTypeLabels: string[]
   packageCount: number
   active: boolean
+  approvalStatus: ApprovalStatus
   createdAt: string
 }
 
@@ -425,6 +430,28 @@ export interface CreateLessonOrderRequest {
 
 export interface RespondOrderRequest {
   coachNote?: string
+}
+
+// --- Dostlar ---
+
+export type FriendRequestStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED'
+
+/** Axtarış/tövsiyə nəticələrində cari istifadəçiyə görə dostluq vəziyyəti */
+export type FriendStatus = 'NONE' | 'PENDING_SENT' | 'PENDING_RECEIVED' | 'FRIENDS'
+
+export interface FriendRequest {
+  id: number
+  sender: PlayerSummary
+  receiver: PlayerSummary
+  status: FriendRequestStatus
+  direction: ChallengeDirection
+  createdAt: string
+  respondedAt: string | null
+}
+
+export interface PlayerWithFriendStatus {
+  player: PlayerSummary
+  friendStatus: FriendStatus
 }
 
 export interface ApiError {

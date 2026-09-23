@@ -655,7 +655,7 @@ function ClosingCta({ user, copy }: { user: { fullName: string } | null; copy: L
         <div className="flex shrink-0 flex-wrap items-center gap-x-7 gap-y-4">
           {user ? (
             <>
-              <Link to="/players" className={buttonClass('gold', 'lg', 'px-6')}>
+              <Link to="/friends" className={buttonClass('gold', 'lg', 'px-6')}>
                 {copy.cta.findOpponent}
               </Link>
               <TextLink to="/academy">{copy.cta.lessons}</TextLink>
