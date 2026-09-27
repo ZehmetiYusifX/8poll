@@ -1,12 +1,12 @@
-import type { LandingLanguage } from '../context/LandingLanguageContext'
+import type { Language } from '../context/LanguageContext'
 
-export const languageOptions: { code: LandingLanguage; label: string; name: string }[] = [
+export const languageOptions: { code: Language; label: string; name: string }[] = [
   { code: 'az', label: 'AZ', name: 'Azərbaycanca' },
   { code: 'en', label: 'EN', name: 'English' },
   { code: 'ru', label: 'RU', name: 'Русский' },
 ]
 
-export const localeByLanguage: Record<LandingLanguage, string> = {
+export const localeByLanguage: Record<Language, string> = {
   az: 'az-AZ',
   en: 'en-US',
   ru: 'ru-RU',
@@ -23,7 +23,7 @@ export const landingCopy = {
       academy: 'Akademiya', lessonShort: 'Dərs', venues: 'Məkanlar', venueShort: 'Məkan', gallery: 'Qalereya', photoShort: 'Şəkil',
       challenges: 'Dəvətlər', challengeShort: 'Dəvət', matches: 'Maçlarım', matchesShort: 'Maçlar', courses: 'Kurslarım',
       myVenue: 'Məkanım', coachPanel: 'Məşqçi panelim', login: 'Daxil ol', register: 'Qeydiyyat',
-      points: 'xal', viewProfile: 'Profilə bax', galleryAdmin: 'Qalereya idarəetməsi', logout: 'Çıxış', accountMenu: 'hesab menyusu',
+      points: 'xal', viewProfile: 'Profilə bax', galleryAdmin: 'Qalereya idarəetməsi', pendingApprovals: 'Təsdiq gözləyənlər', logout: 'Çıxış', accountMenu: 'hesab menyusu',
       footer: 'Bilyard reytinq və turnir platforması',
     },
     hero: {
@@ -88,7 +88,7 @@ export const landingCopy = {
       academy: 'Academy', lessonShort: 'Learn', venues: 'Venues', venueShort: 'Venues', gallery: 'Gallery', photoShort: 'Photos',
       challenges: 'Challenges', challengeShort: 'Challenge', matches: 'My matches', matchesShort: 'Matches', courses: 'My courses',
       myVenue: 'My venue', coachPanel: 'Coach dashboard', login: 'Log in', register: 'Register',
-      points: 'points', viewProfile: 'View profile', galleryAdmin: 'Manage gallery', logout: 'Log out', accountMenu: 'account menu',
+      points: 'points', viewProfile: 'View profile', galleryAdmin: 'Manage gallery', pendingApprovals: 'Pending approvals', logout: 'Log out', accountMenu: 'account menu',
       footer: 'Billiard ranking and tournament platform',
     },
     hero: {
@@ -153,7 +153,7 @@ export const landingCopy = {
       academy: 'Академия', lessonShort: 'Уроки', venues: 'Клубы', venueShort: 'Клубы', gallery: 'Галерея', photoShort: 'Фото',
       challenges: 'Вызовы', challengeShort: 'Вызов', matches: 'Мои матчи', matchesShort: 'Матчи', courses: 'Мои курсы',
       myVenue: 'Мой клуб', coachPanel: 'Кабинет тренера', login: 'Войти', register: 'Регистрация',
-      points: 'очков', viewProfile: 'Открыть профиль', galleryAdmin: 'Управление галереей', logout: 'Выйти', accountMenu: 'меню аккаунта',
+      points: 'очков', viewProfile: 'Открыть профиль', galleryAdmin: 'Управление галереей', pendingApprovals: 'Ожидают подтверждения', logout: 'Выйти', accountMenu: 'меню аккаунта',
       footer: 'Платформа рейтингов и турниров по бильярду',
     },
     hero: {

@@ -1,81 +1,93 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Modal } from './Modal'
-import { Alert, Button, ErrorText, Field, Select, cx } from './ui'
+import { Alert, Button, Empty, ErrorText, Field, ListSkeleton, Select, cx } from './ui'
 import { Avatar } from './Avatar'
-import { IconCheck, IconMinus, IconPlus } from './icons'
-import { MatchApi, PlayerApi } from '../api'
+import { IconCheck, IconMinus, IconPlus, IconSwords } from './icons'
+import { ChallengeApi, MatchApi } from '../api'
 import { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
-import type { GameType, PlayerSummary, Player } from '../api/types'
+import { GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { timeAgo } from '../utils/format'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
+import type { Challenge, PlayerSummary } from '../api/types'
 
 interface Props {
   open: boolean
   onClose: () => void
   onDone?: () => void
-  /** Əvvəlcədən seçilmiş rəqib (məs. qəbul edilmiş dəvətdən) */
-  opponent?: PlayerSummary | Player
-  challengeId?: number
-  /** Əvvəlcədən seçilmiş intizam. Dəvətdən gəlirsə dəyişdirilə bilməz. */
-  defaultGameType?: GameType
-  /** Dəvətin intizamı — seçim kilidlənir, çünki backend uyğunluğu yoxlayır */
-  lockedGameType?: GameType
+  /**
+   * Konkret dəvət üzrə nəticə (Dəvətlər səhifəsi) — seçim addımı atlanır.
+   * Verilmədikdə modal qəbul edilmiş dəvətlərin siyahısını özü yükləyir.
+   */
+  challenge?: Challenge
+  /** Yalnız bu rəqiblə olan dəvətləri göstər (oyunçu profili) */
+  opponentId?: number
 }
 
-export function ReportMatchModal({
-  open,
-  onClose,
-  onDone,
-  opponent,
-  challengeId,
-  defaultGameType,
-  lockedGameType,
-}: Props) {
-  const { user } = useAuth()
+/** Dəvətdə qarşı tərəf — cari istifadəçi hansı tərəfdədirsə, digəri */
+function otherSide(c: Challenge): PlayerSummary {
+  return c.direction === 'INCOMING' ? c.challenger : c.opponent
+}
 
-  const [players, setPlayers] = useState<PlayerSummary[]>([])
-  const [opponentId, setOpponentId] = useState<number | undefined>(opponent?.id)
-  const [gameType, setGameType] = useState<GameType>(
-    lockedGameType ?? defaultGameType ?? DEFAULT_GAME_TYPE,
-  )
+export function ReportMatchModal({ open, onClose, onDone, challenge, opponentId }: Props) {
+  const { user } = useAuth()
+  const { language } = useLanguage()
+  const copy = appCopy[language].reportMatchModal
+
+  const [options, setOptions] = useState<Challenge[] | null>(null)
+  const [pickedId, setPickedId] = useState<number | undefined>(challenge?.id)
   const [myScore, setMyScore] = useState(0)
   const [theirScore, setTheirScore] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
 
+  // Hazır dəvətlər — yalnız seçim lazım olduqda çəkilir
   useEffect(() => {
-    setOpponentId(opponent?.id)
-  }, [opponent])
+    if (!open || challenge) return
+    setOptions(null)
+    ChallengeApi.playable()
+      .then((list) => {
+        const relevant = opponentId
+          ? list.filter((c) => otherSide(c).id === opponentId)
+          : list
+        setOptions(relevant)
+        // Yeganə variant varsa əldə seçməyə ehtiyac yoxdur
+        setPickedId(relevant.length === 1 ? relevant[0].id : undefined)
+      })
+      .catch((e) => {
+        setOptions([])
+        setError(extractErrorMessage(e))
+      })
+  }, [open, challenge, opponentId])
 
-  // Modal hər açılışda cari intizamla başlasın
   useEffect(() => {
-    if (open) setGameType(lockedGameType ?? defaultGameType ?? DEFAULT_GAME_TYPE)
-  }, [open, lockedGameType, defaultGameType])
+    if (open && challenge) setPickedId(challenge.id)
+  }, [open, challenge])
 
-  useEffect(() => {
-    if (!open || opponent) return
-    PlayerApi.list()
-      .then((list) => setPlayers(list.filter((p) => p.id !== user?.id)))
-      .catch(() => {})
-  }, [open, opponent, user?.id])
-
-  const selected = opponent ?? players.find((p) => p.id === opponentId)
-  const opponentName = selected?.fullName ?? 'Rəqib'
+  const picked = useMemo(
+    () => challenge ?? options?.find((c) => c.id === pickedId),
+    [challenge, options, pickedId],
+  )
+  const selected = picked ? otherSide(picked) : undefined
+  const opponentName = selected?.fullName ?? copy.opponentFallback
+  const gameType = picked?.gameType
 
   const submit = async () => {
     setError('')
-    if (!opponentId) return setError('Rəqib seçin')
-    if (myScore === theirScore) return setError('Bilyardda heç-heçə olmur — qalib hesab daxil edin')
+    if (!picked || !selected) return setError(copy.selectChallenge)
+    if (myScore === theirScore) return setError(copy.draw)
 
     setLoading(true)
     try {
       await MatchApi.report({
-        opponentId,
-        gameType,
+        opponentId: selected.id,
+        gameType: picked.gameType,
         myScore,
         opponentScore: theirScore,
-        challengeId,
+        challengeId: picked.id,
       })
       setDone(true)
       onDone?.()
@@ -91,18 +103,20 @@ export function ReportMatchModal({
     setTheirScore(0)
     setError('')
     setDone(false)
-    if (!opponent) setOpponentId(undefined)
+    if (!challenge) setPickedId(undefined)
     onClose()
   }
 
   const iWon = myScore > theirScore
+  const needsPick = !challenge
+  const noOptions = needsPick && options !== null && options.length === 0
 
   return (
     <Modal
       open={open}
       onClose={close}
-      title="Nəticə daxil et"
-      description={done ? undefined : 'Rəqibiniz təsdiqlədikdən sonra reytinqlər yenilənəcək.'}
+      title={copy.title}
+      description={done ? undefined : copy.description}
     >
       {done ? (
         <div className="space-y-4">
@@ -110,83 +124,103 @@ export function ReportMatchModal({
             <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-felt-600 text-ivory">
               <IconCheck size={22} />
             </span>
-            <p className="font-medium text-felt-300">Nəticə qeydə alındı</p>
+            <p className="font-medium text-felt-300">{copy.recordedTitle}</p>
             <p className="mx-auto mt-1 max-w-xs text-sm text-felt-300/80">
-              <b>{opponentName}</b> təsdiqlədikdən sonra hər ikinizin{' '}
-              <b>{GAME_TYPE_LABEL[gameType]}</b> reytinqi yenilənəcək.
+              {copy.recordedHint(opponentName, gameType ? GAME_TYPE_LABEL[language][gameType] : '')}
             </p>
           </div>
           <Button variant="secondary" block onClick={close}>
-            Bağla
+            {copy.close}
           </Button>
+        </div>
+      ) : needsPick && options === null ? (
+        <ListSkeleton rows={3} />
+      ) : noOptions ? (
+        <div className="space-y-4">
+          <Empty
+            icon={<IconSwords size={20} />}
+            title={copy.emptyTitle}
+            hint={opponentId ? copy.emptyHintOpponent : copy.emptyHintGeneral}
+            action={
+              <Link to="/challenges" onClick={close}>
+                <Button variant="secondary" icon={<IconSwords size={16} />}>
+                  {copy.viewChallenges}
+                </Button>
+              </Link>
+            }
+          />
+          <ErrorText>{error}</ErrorText>
         </div>
       ) : (
         <div className="space-y-5">
-          {!opponent && (
-            <Field label="Rəqib">
+          {/* Rəqib də, intizam da dəvətdən gəlir — ayrıca seçilmir */}
+          {needsPick && (
+            <Field label={copy.gameLabel} hint={copy.gameHint}>
               <Select
-                value={opponentId ?? ''}
-                onChange={(e) => setOpponentId(Number(e.target.value) || undefined)}
+                value={pickedId ?? ''}
+                onChange={(e) => setPickedId(Number(e.target.value) || undefined)}
               >
-                <option value="">Oyunçu seçin...</option>
-                {players.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.fullName} (@{p.username}) · {p.rating} xal
-                  </option>
-                ))}
+                <option value="">{copy.chooseChallenge}</option>
+                {options?.map((c) => {
+                  const o = otherSide(c)
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {o.fullName} · {GAME_TYPE_LABEL[language][c.gameType]} · {timeAgo(c.createdAt)}
+                    </option>
+                  )
+                })}
               </Select>
             </Field>
           )}
 
-          {/* Reytinq yalnız seçilmiş intizama tətbiq olunur */}
-          <Field
-            label="Oyun növü"
-            hint={
-              lockedGameType
-                ? 'Dəvətin intizamı — dəyişdirilə bilməz'
-                : 'Reytinq yalnız bu intizam üzrə dəyişəcək'
-            }
-          >
-            <Select
-              value={gameType}
-              disabled={!!lockedGameType}
-              onChange={(e) => setGameType(e.target.value as GameType)}
-            >
-              {GAME_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {GAME_TYPE_LABEL[t]}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          {picked && (
+            <dl className="divide-y divide-rail border-y border-rail text-sm">
+              <div className="flex items-center justify-between gap-3 py-2.5">
+                <dt className="text-ink-500">{copy.gameTypeLabel}</dt>
+                <dd className="font-medium text-ink-800">{GAME_TYPE_LABEL[language][picked.gameType]}</dd>
+              </div>
+              {picked.venue && (
+                <div className="flex items-center justify-between gap-3 py-2.5">
+                  <dt className="text-ink-500">{copy.venueLabel}</dt>
+                  <dd className="truncate font-medium text-ink-800">{picked.venue.name}</dd>
+                </div>
+              )}
+            </dl>
+          )}
 
           {/* Hesab girişi */}
           <div className="rounded-xl border border-rail bg-cream p-4">
             <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 sm:gap-3">
               <ScoreColumn
-                name={user?.fullName ?? 'Siz'}
-                sublabel="Siz"
+                name={user?.fullName ?? copy.you}
+                sublabel={copy.you}
                 color={user?.avatarColor}
                 avatarUrl={user?.avatarUrl}
                 value={myScore}
                 onChange={setMyScore}
                 winning={myScore !== theirScore && iWon}
+                decreaseLabel={copy.decrease}
+                increaseLabel={copy.increase}
+                scoreLabel={copy.scoreLabel}
               />
               <div className="flex h-[46px] items-center font-display text-2xl text-ink-300">:</div>
               <ScoreColumn
-                name={selected?.fullName ?? 'Rəqib'}
-                sublabel={selected ? `@${selected.username}` : 'seçilməyib'}
+                name={selected?.fullName ?? copy.opponentFallback}
+                sublabel={selected ? `@${selected.username}` : copy.opponentUnselected}
                 color={selected?.avatarColor}
                 avatarUrl={selected?.avatarUrl}
                 value={theirScore}
                 onChange={setTheirScore}
                 winning={myScore !== theirScore && !iWon}
+                decreaseLabel={copy.decrease}
+                increaseLabel={copy.increase}
+                scoreLabel={copy.scoreLabel}
               />
             </div>
 
             {myScore !== theirScore && selected && (
               <p className="mt-3.5 border-t border-rail pt-3 text-center text-sm text-ink-500">
-                Qalib:{' '}
+                {copy.winner}:{' '}
                 <b className="font-semibold text-felt-300">
                   {iWon ? user?.fullName : selected.fullName}
                 </b>
@@ -195,22 +229,22 @@ export function ReportMatchModal({
           </div>
 
           {myScore === theirScore && myScore > 0 && (
-            <Alert tone="info">Bilyardda heç-heçə olmur — qalibin hesabını daxil edin.</Alert>
+            <Alert tone="info">{copy.drawAlert}</Alert>
           )}
 
           <ErrorText>{error}</ErrorText>
 
           <div className="flex gap-2">
             <Button variant="secondary" block onClick={close} disabled={loading}>
-              Ləğv et
+              {copy.cancel}
             </Button>
             <Button
               block
               loading={loading}
-              disabled={!opponentId || myScore === theirScore}
+              disabled={!picked || myScore === theirScore}
               onClick={submit}
             >
-              Təqdim et
+              {copy.submit}
             </Button>
           </div>
         </div>
@@ -230,6 +264,9 @@ function ScoreColumn({
   value,
   onChange,
   winning,
+  decreaseLabel,
+  increaseLabel,
+  scoreLabel,
 }: {
   name: string
   sublabel: string
@@ -238,6 +275,9 @@ function ScoreColumn({
   value: number
   onChange: (v: number) => void
   winning: boolean
+  decreaseLabel: string
+  increaseLabel: string
+  scoreLabel: (name: string) => string
 }) {
   const clamp = (v: number) => Math.min(MAX_SCORE, Math.max(0, v))
 
@@ -257,7 +297,7 @@ function ScoreColumn({
           winning ? 'border-felt-500/40' : 'border-rail-strong',
         )}
       >
-        <StepButton label="Azalt" onClick={() => onChange(clamp(value - 1))} disabled={value === 0}>
+        <StepButton label={decreaseLabel} onClick={() => onChange(clamp(value - 1))} disabled={value === 0}>
           <IconMinus size={14} />
         </StepButton>
 
@@ -269,7 +309,7 @@ function ScoreColumn({
           value={value}
           onChange={(e) => onChange(clamp(Number(e.target.value) || 0))}
           onFocus={(e) => e.target.select()}
-          aria-label={`${name} hesabı`}
+          aria-label={scoreLabel(name)}
           className={cx(
             'w-full min-w-0 border-0 bg-transparent text-center font-display text-2xl font-semibold tabular-nums outline-none',
             winning ? 'text-felt-300' : 'text-ink-800',
@@ -277,7 +317,7 @@ function ScoreColumn({
         />
 
         <StepButton
-          label="Artır"
+          label={increaseLabel}
           onClick={() => onChange(clamp(value + 1))}
           disabled={value >= MAX_SCORE}
         >

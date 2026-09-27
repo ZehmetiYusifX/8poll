@@ -3,56 +3,67 @@ import { Badge, Card, cx } from './ui'
 import type { BadgeTone } from './ui'
 import { IconCalendar, IconPin, IconTable, IconTrophy, IconUsers } from './icons'
 import { GAME_TYPE_LABEL } from '../constants/gameTypes'
-import type { GameType, Tournament, TournamentStatus } from '../api/types'
-import type { LandingLanguage } from '../context/LandingLanguageContext'
+import type { Tournament, TournamentStatus } from '../api/types'
+import type { Language } from '../context/LanguageContext'
+import { useLanguage } from '../context/LanguageContext'
 import { localeByLanguage } from '../i18n/landing'
 
-export const statusMeta: Record<TournamentStatus, { text: string; tone: BadgeTone; bar: string }> = {
-  REGISTRATION: { text: 'Qeydiyyat açıq', tone: 'green', bar: 'bg-felt-500' },
-  ONGOING: { text: 'Davam edir', tone: 'yellow', bar: 'bg-honey-600' },
-  COMPLETED: { text: 'Bitdi', tone: 'blue', bar: 'bg-steel-700' },
-  CANCELLED: { text: 'Ləğv edildi', tone: 'neutral', bar: 'bg-rail-strong' },
+const STATUS_BAR: Record<TournamentStatus, string> = {
+  REGISTRATION: 'bg-felt-500',
+  ONGOING: 'bg-honey-600',
+  COMPLETED: 'bg-steel-700',
+  CANCELLED: 'bg-rail-strong',
 }
 
-const localizedText: Record<LandingLanguage, {
-  status: Record<TournamentStatus, string>
-  participants: string
-  winner: string
-  games: Record<GameType, string>
-}> = {
+const STATUS_TONE: Record<TournamentStatus, BadgeTone> = {
+  REGISTRATION: 'green',
+  ONGOING: 'yellow',
+  COMPLETED: 'blue',
+  CANCELLED: 'neutral',
+}
+
+export const statusMeta: Record<Language, Record<TournamentStatus, { text: string; tone: BadgeTone; bar: string }>> = {
   az: {
-    status: { REGISTRATION: 'Qeydiyyat açıq', ONGOING: 'Davam edir', COMPLETED: 'Bitdi', CANCELLED: 'Ləğv edildi' },
-    participants: 'İştirakçılar',
-    winner: 'Qalib',
-    games: GAME_TYPE_LABEL,
+    REGISTRATION: { text: 'Qeydiyyat açıq', tone: STATUS_TONE.REGISTRATION, bar: STATUS_BAR.REGISTRATION },
+    ONGOING: { text: 'Davam edir', tone: STATUS_TONE.ONGOING, bar: STATUS_BAR.ONGOING },
+    COMPLETED: { text: 'Bitdi', tone: STATUS_TONE.COMPLETED, bar: STATUS_BAR.COMPLETED },
+    CANCELLED: { text: 'Ləğv edildi', tone: STATUS_TONE.CANCELLED, bar: STATUS_BAR.CANCELLED },
   },
   en: {
-    status: { REGISTRATION: 'Registration open', ONGOING: 'In progress', COMPLETED: 'Completed', CANCELLED: 'Cancelled' },
-    participants: 'Participants',
-    winner: 'Winner',
-    games: { EIGHT_BALL: '8-ball', RUSSIAN_PYRAMID: 'Russian pyramid', SNOOKER: 'Snooker' },
+    REGISTRATION: { text: 'Registration open', tone: STATUS_TONE.REGISTRATION, bar: STATUS_BAR.REGISTRATION },
+    ONGOING: { text: 'In progress', tone: STATUS_TONE.ONGOING, bar: STATUS_BAR.ONGOING },
+    COMPLETED: { text: 'Completed', tone: STATUS_TONE.COMPLETED, bar: STATUS_BAR.COMPLETED },
+    CANCELLED: { text: 'Cancelled', tone: STATUS_TONE.CANCELLED, bar: STATUS_BAR.CANCELLED },
   },
   ru: {
-    status: { REGISTRATION: 'Регистрация открыта', ONGOING: 'Идёт', COMPLETED: 'Завершён', CANCELLED: 'Отменён' },
-    participants: 'Участники',
-    winner: 'Победитель',
-    games: { EIGHT_BALL: 'Пул-8', RUSSIAN_PYRAMID: 'Русская пирамида', SNOOKER: 'Снукер' },
+    REGISTRATION: { text: 'Регистрация открыта', tone: STATUS_TONE.REGISTRATION, bar: STATUS_BAR.REGISTRATION },
+    ONGOING: { text: 'Идёт', tone: STATUS_TONE.ONGOING, bar: STATUS_BAR.ONGOING },
+    COMPLETED: { text: 'Завершён', tone: STATUS_TONE.COMPLETED, bar: STATUS_BAR.COMPLETED },
+    CANCELLED: { text: 'Отменён', tone: STATUS_TONE.CANCELLED, bar: STATUS_BAR.CANCELLED },
   },
+}
+
+const localizedText: Record<Language, { participants: string; winner: string }> = {
+  az: { participants: 'İştirakçılar', winner: 'Qalib' },
+  en: { participants: 'Participants', winner: 'Winner' },
+  ru: { participants: 'Участники', winner: 'Победитель' },
 }
 
 export function TournamentCard({
   tournament: t,
   hideVenue = false,
-  language = 'az',
+  language,
 }: {
   tournament: Tournament
   hideVenue?: boolean
-  language?: LandingLanguage
+  language?: Language
 }) {
-  const labels = localizedText[language]
-  const st = { ...statusMeta[t.status], text: labels.status[t.status] }
+  const { language: contextLanguage } = useLanguage()
+  const lang = language ?? contextLanguage
+  const labels = localizedText[lang]
+  const st = statusMeta[lang][t.status]
   const fillPct = Math.min(100, Math.round((t.participantCount / t.maxParticipants) * 100))
-  const soon = t.status === 'REGISTRATION' ? localizedTimeUntil(t.startAt, language) : null
+  const soon = t.status === 'REGISTRATION' ? localizedTimeUntil(t.startAt, lang) : null
 
   return (
     <Link to={`/tournaments/${t.id}`} className="group block h-full">
@@ -72,7 +83,7 @@ export function TournamentCard({
           {/* Turnirin intizamı — seed sıralaması bu reytinqə görə qurulur */}
           <span className="inline-flex items-center gap-1">
             <IconTable size={13} className="text-ink-400" />
-            {labels.games[t.gameType]}
+            {GAME_TYPE_LABEL[lang][t.gameType]}
           </span>
           {!hideVenue && (
             <span className="inline-flex items-center gap-1">
@@ -83,7 +94,7 @@ export function TournamentCard({
           {t.startAt && (
             <span className="inline-flex items-center gap-1">
               <IconCalendar size={13} className="text-ink-400" />
-              {localizedDate(t.startAt, language)}
+              {localizedDate(t.startAt, lang)}
               {soon && <span className="text-felt-300">· {soon}</span>}
             </span>
           )}
@@ -124,7 +135,7 @@ export function TournamentCard({
   )
 }
 
-function localizedDate(iso: string | null, language: LandingLanguage): string {
+function localizedDate(iso: string | null, language: Language): string {
   if (!iso) return '—'
   return new Intl.DateTimeFormat(localeByLanguage[language], {
     day: 'numeric',
@@ -133,7 +144,7 @@ function localizedDate(iso: string | null, language: LandingLanguage): string {
   }).format(new Date(iso))
 }
 
-function localizedTimeUntil(iso: string | null, language: LandingLanguage): string | null {
+function localizedTimeUntil(iso: string | null, language: Language): string | null {
   if (!iso) return null
   const diff = new Date(iso).getTime() - Date.now()
   if (diff <= 0) return null

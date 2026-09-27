@@ -7,9 +7,11 @@ import { Alert, Badge, Button, Card, Empty, Input, ListSkeleton, PageHeader } fr
 import { IconAcademy, IconPin, IconPlus, IconSearch } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import { GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
 import type { Coach } from '../api/types'
 
 export function Coaches() {
+  const { language } = useLanguage()
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
@@ -109,7 +111,7 @@ export function Coaches() {
 
                   <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-ink-400">
                     <span className="text-ink-500">
-                      {c.gameTypes.map((g) => GAME_TYPE_LABEL[g]).join(' · ')}
+                      {c.gameTypes.map((g) => GAME_TYPE_LABEL[language][g]).join(' · ')}
                     </span>
                     {c.venue && (
                       <>

@@ -29,6 +29,8 @@ import { useAuth } from '../context/AuthContext'
 import { AVATAR_COLORS, formatDate } from '../utils/format'
 import { TierBadge } from '../components/TierBadge'
 import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { GameType, Match, Player } from '../api/types'
 
 type Filter = 'all' | 'wins' | 'losses'
@@ -37,6 +39,8 @@ export function PlayerProfile() {
   const { id } = useParams<{ id: string }>()
   const playerId = Number(id)
   const { user, refresh, setUser } = useAuth()
+  const { language } = useLanguage()
+  const copy = appCopy[language].playerProfile
 
   const [player, setPlayer] = useState<Player | null>(null)
   const [matches, setMatches] = useState<Match[]>([])
@@ -118,7 +122,7 @@ export function PlayerProfile() {
 
   if (loading) return <ProfileSkeleton />
   if (error || !player) {
-    return <Empty title="Oyunçu tapılmadı" hint={error || 'Bu profil mövcud deyil və ya silinib.'} />
+    return <Empty title={copy.notFoundTitle} hint={error || copy.notFoundHint} />
   }
 
   return (
@@ -139,7 +143,7 @@ export function PlayerProfile() {
               </h1>
               <p className="text-sm text-felt-200/80">@{player.username}</p>
               <p className="mt-1 text-xs text-felt-200/60">
-                Qoşulub: {formatDate(player.createdAt)}
+                {copy.joined(formatDate(player.createdAt))}
               </p>
             </div>
           </div>
@@ -147,7 +151,7 @@ export function PlayerProfile() {
           <div className="flex items-end gap-5">
             <div>
               <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">
-                Ən yaxşı reytinq
+                {copy.bestRating}
               </div>
               <div className="font-display text-4xl font-bold leading-none tabular-nums text-gold-200">
                 {player.rating}
@@ -161,12 +165,12 @@ export function PlayerProfile() {
             Hər intizamın öz reytinqi, statistikası və liqası var. */}
         <div className="border-b border-rail bg-card">
           <div className="hidden items-center gap-4 border-b border-rail bg-cream px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400 sm:flex">
-            <span className="flex-1">İntizam</span>
-            <span className="w-24">Liqa</span>
-            <span className="w-24 text-center">Q / M</span>
-            <span className="w-14 text-center">Oyun</span>
-            <span className="w-12 text-center">%</span>
-            <span className="w-20 text-right">Reytinq</span>
+            <span className="flex-1">{copy.colDiscipline}</span>
+            <span className="w-24">{copy.colLeague}</span>
+            <span className="w-24 text-center">{copy.colWL}</span>
+            <span className="w-14 text-center">{copy.colGames}</span>
+            <span className="w-12 text-center">{copy.colWinRate}</span>
+            <span className="w-20 text-right">{copy.colRating}</span>
           </div>
           <ul className="divide-y divide-rail">
             {GAME_TYPES.map((type) => {
@@ -190,12 +194,12 @@ export function PlayerProfile() {
                           active ? 'font-semibold text-ink-900' : 'text-ink-700',
                         )}
                       >
-                        {GAME_TYPE_LABEL[type]}
+                        {GAME_TYPE_LABEL[language][type]}
                       </span>
                       <span className="mt-1 flex items-center gap-2 text-xs text-ink-400 sm:hidden">
                         <TierBadge tier={r?.tier} />
                         <span>
-                          {r ? `${r.wins}Q / ${r.losses}M · ${r.gamesPlayed} oyun` : 'Oyun yoxdur'}
+                          {r ? copy.wlShort(r.wins, r.losses, r.gamesPlayed) : copy.noGames}
                         </span>
                       </span>
                     </span>
@@ -238,30 +242,30 @@ export function PlayerProfile() {
                 className={buttonClass('primary', 'md')}
               >
                 <IconSwords size={16} />
-                Dəvət göndərmək üçün daxil olun
+                {copy.loginToChallenge}
               </Link>
               <Link to="/register" className={buttonClass('ghost', 'md')}>
-                Qeydiyyat
+                {copy.register}
               </Link>
             </>
           ) : isMe ? (
             <Button variant="secondary" icon={<IconPencil size={16} />} onClick={() => setEdit(true)}>
-              Profili redaktə et
+              {copy.editProfile}
             </Button>
           ) : (
             <>
               <Button icon={<IconSwords size={16} />} onClick={() => setChallenge(true)}>
-                Dəvət göndər
+                {copy.sendChallenge}
               </Button>
               <Button variant="secondary" icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
-                Nəticə daxil et
+                {copy.reportResult}
               </Button>
             </>
           )}
 
           {headToHead && (
             <div className="ml-auto flex items-center gap-2 text-sm text-ink-500">
-              <span className="text-xs uppercase tracking-wide text-ink-400">Sizinlə</span>
+              <span className="text-xs uppercase tracking-wide text-ink-400">{copy.vsYou}</span>
               <span className="font-display text-base font-semibold tabular-nums">
                 <span className="text-felt-300">{headToHead.mine}</span>
                 <span className="mx-1 text-ink-300">–</span>
@@ -280,18 +284,18 @@ export function PlayerProfile() {
 
       <section>
         <SectionHeader
-          title={`Maç tarixçəsi — ${GAME_TYPE_LABEL[discipline]}`}
+          title={copy.matchHistory(GAME_TYPE_LABEL[language][discipline])}
           count={confirmed.length}
           action={
             confirmed.length > 0 && (
               <Segmented
                 value={filter}
                 onChange={setFilter}
-                label="Maç filtri"
+                label={copy.matchFilterLabel}
                 items={[
-                  { value: 'all', label: 'Hamısı' },
-                  { value: 'wins', label: 'Qələbə' },
-                  { value: 'losses', label: 'Məğlub' },
+                  { value: 'all', label: copy.filterAll },
+                  { value: 'wins', label: copy.filterWins },
+                  { value: 'losses', label: copy.filterLosses },
                 ]}
               />
             )
@@ -303,16 +307,16 @@ export function PlayerProfile() {
             icon={<IconTable size={20} />}
             title={
               confirmed.length === 0
-                ? `${GAME_TYPE_LABEL[discipline]} üzrə təsdiqlənmiş maç yoxdur`
+                ? copy.emptyNoConfirmed(GAME_TYPE_LABEL[language][discipline])
                 : filter === 'wins'
-                  ? 'Qələbə yoxdur'
-                  : 'Məğlubiyyət yoxdur'
+                  ? copy.emptyNoWins
+                  : copy.emptyNoLosses
             }
             hint={
               confirmed.length === 0
                 ? isMe
-                  ? 'Yuxarıdakı cədvəldən başqa intizam seçin və ya bu intizamda ilk maçınızı oynayın.'
-                  : 'Bu oyunçunu bu intizamda dəvət edin və ilk maçı siz oynayın.'
+                  ? copy.emptyHintMe
+                  : copy.emptyHintOther
                 : undefined
             }
           />
@@ -335,8 +339,7 @@ export function PlayerProfile() {
           />
           <ReportMatchModal
             open={report}
-            opponent={player}
-            defaultGameType={discipline}
+            opponentId={player.id}
             onClose={() => setReport(false)}
             onDone={() => {
               load()
@@ -402,6 +405,8 @@ function EditProfileModal({
   onSaved: (p: Player) => void
 }) {
   const toast = useToast()
+  const { language } = useLanguage()
+  const copy = appCopy[language].playerProfile
   const [fullName, setFullName] = useState(player.fullName)
   const [bio, setBio] = useState(player.bio ?? '')
   const [color, setColor] = useState(player.avatarColor ?? AVATAR_COLORS[0])
@@ -434,7 +439,7 @@ function EditProfileModal({
       const updated = await PlayerApi.uploadAvatar(file)
       setAvatarUrl(updated.avatarUrl)
       onSaved(updated)
-      toast.success('Profil şəkli yeniləndi')
+      toast.success(copy.avatarUpdated)
     } catch (e) {
       setError(extractErrorMessage(e))
     } finally {
@@ -450,7 +455,7 @@ function EditProfileModal({
       const updated = await PlayerApi.removeAvatar()
       setAvatarUrl(null)
       onSaved(updated)
-      toast.success('Profil şəkli silindi')
+      toast.success(copy.avatarRemoved)
     } catch (e) {
       setError(extractErrorMessage(e))
     } finally {
@@ -459,7 +464,7 @@ function EditProfileModal({
   }
 
   const save = async () => {
-    if (fullName.trim().length < 2) return setError('Ad ən azı 2 simvol olmalıdır')
+    if (fullName.trim().length < 2) return setError(copy.nameTooShort)
     setLoading(true)
     setError('')
     try {
@@ -469,7 +474,7 @@ function EditProfileModal({
         avatarColor: color,
       })
       onSaved(updated)
-      toast.success('Profil yeniləndi')
+      toast.success(copy.profileUpdated)
       onClose()
     } catch (e) {
       setError(extractErrorMessage(e))
@@ -479,7 +484,7 @@ function EditProfileModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Profili redaktə et">
+    <Modal open={open} onClose={onClose} title={copy.editTitle}>
       <div className="space-y-4">
         <div className="flex items-center gap-3.5 rounded-lg border border-rail bg-cream p-3">
           <Avatar name={fullName || player.fullName} color={color} src={avatarUrl} size={48} />
@@ -502,7 +507,7 @@ function EditProfileModal({
               disabled={photoBusy}
               className="font-semibold text-felt-300 transition-colors hover:text-felt-200 disabled:opacity-50"
             >
-              {photoBusy ? 'Gözləyin…' : avatarUrl ? 'Şəkli dəyiş' : 'Şəkil yüklə'}
+              {photoBusy ? copy.uploading : avatarUrl ? copy.changePhoto : copy.uploadPhoto}
             </button>
             {avatarUrl && !photoBusy && (
               <button
@@ -510,32 +515,32 @@ function EditProfileModal({
                 onClick={removePhoto}
                 className="text-ink-400 transition-colors hover:text-clay-300"
               >
-                Sil
+                {copy.remove}
               </button>
             )}
           </div>
         </div>
 
-        <Field label="Ad Soyad">
+        <Field label={copy.fullName}>
           <Input value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
         </Field>
 
-        <Field label="Haqqında" optional hint={`${bio.length}/${BIO_LIMIT} simvol`}>
+        <Field label={copy.about} optional hint={copy.charCount(bio.length, BIO_LIMIT)}>
           <Textarea
             rows={3}
             maxLength={BIO_LIMIT}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="Oyun tərziniz, sevimli klubunuz..."
+            placeholder={copy.aboutPlaceholder}
           />
         </Field>
 
         <div>
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
-            Avatar rəngi
+            {copy.avatarColor}
             {avatarUrl && (
               <span className="ml-1.5 font-normal normal-case tracking-normal text-ink-400">
-                — şəkil silinsə istifadə olunacaq
+                {copy.avatarColorUsedIfRemoved}
               </span>
             )}
           </p>
@@ -545,7 +550,7 @@ function EditProfileModal({
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
-                aria-label={`Rəng ${c}`}
+                aria-label={copy.colorLabel(c)}
                 aria-pressed={color === c}
                 className={cx(
                   'h-8 w-8 rounded-full transition-transform duration-150 hover:scale-110',
@@ -561,10 +566,10 @@ function EditProfileModal({
 
         <div className="flex gap-2 pt-1">
           <Button variant="secondary" block onClick={onClose} disabled={loading}>
-            Ləğv et
+            {copy.cancel}
           </Button>
           <Button block onClick={save} loading={loading}>
-            Yadda saxla
+            {copy.save}
           </Button>
         </div>
       </div>

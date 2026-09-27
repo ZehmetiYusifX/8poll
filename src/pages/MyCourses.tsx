@@ -24,6 +24,7 @@ import {
   formatPrice,
   isActiveOrder,
 } from '../constants/academy'
+import { useLanguage } from '../context/LanguageContext'
 import type { LessonOrder } from '../api/types'
 
 type Tab = 'active' | 'archive'
@@ -31,6 +32,7 @@ type Tab = 'active' | 'archive'
 /** Şagirdin sifarişləri — «Kurslarım» */
 export function MyCourses() {
   const toast = useToast()
+  const { language } = useLanguage()
   const [tab, setTab] = useState<Tab>('active')
   const [orders, setOrders] = useState<LessonOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -145,7 +147,7 @@ export function MyCourses() {
                       {coach.player.fullName}
                     </Link>
                     <span aria-hidden>·</span>
-                    <span className="text-ink-500">{GAME_TYPE_LABEL[o.lessonPackage.gameType]}</span>
+                    <span className="text-ink-500">{GAME_TYPE_LABEL[language][o.lessonPackage.gameType]}</span>
                     <span aria-hidden>·</span>
                     <span className="inline-flex items-center gap-0.5 tabular-nums">
                       <IconClock size={12} />
@@ -171,7 +173,7 @@ export function MyCourses() {
                 note={o.coachNote}
                 actions={
                   <>
-                    <Badge tone={ORDER_STATUS_TONE[o.status]}>{ORDER_STATUS_LABEL[o.status]}</Badge>
+                    <Badge tone={ORDER_STATUS_TONE[o.status]}>{ORDER_STATUS_LABEL[language][o.status]}</Badge>
                     {canCancel && (
                       <Button variant="ghost" size="sm" onClick={() => setToCancel(o)}>
                         Ləğv et

@@ -1,5 +1,6 @@
 import { Badge, type BadgeTone } from './ui'
 import { TIER_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
 import type { Tier } from '../api/types'
 
 /**
@@ -23,10 +24,11 @@ export function TierBadge({
   tier: Tier | null | undefined
   className?: string
 }) {
+  const { language } = useLanguage()
   if (!tier) return null
   return (
     <Badge tone={TIER_TONE[tier]} className={className}>
-      {TIER_LABEL[tier]}
+      {TIER_LABEL[language][tier]}
     </Badge>
   )
 }

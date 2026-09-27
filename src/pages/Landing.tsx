@@ -9,9 +9,9 @@ import { TournamentCard } from '../components/TournamentCard'
 import { Skeleton, buttonClass, cx } from '../components/ui'
 import { IconArrowRight } from '../components/icons'
 import type { LeaderboardEntry, Match, Tournament, TournamentStatus } from '../api/types'
-import { useLandingLanguage } from '../context/LandingLanguageContext'
-import type { LandingLanguage } from '../context/LandingLanguageContext'
-import { landingCopy, languageOptions, localeByLanguage } from '../i18n/landing'
+import { useLanguage } from '../context/LanguageContext'
+import type { Language } from '../context/LanguageContext'
+import { landingCopy, localeByLanguage } from '../i18n/landing'
 
 /*
  * Təqdimat səhifəsi. Qonaq da, üzv də eyni səhifəni görür — fərq yalnız
@@ -29,7 +29,7 @@ import { landingCopy, languageOptions, localeByLanguage } from '../i18n/landing'
  */
 const HERO_PHOTO: string | null = null
 
-type LandingCopy = (typeof landingCopy)[LandingLanguage]
+type LandingCopy = (typeof landingCopy)[Language]
 
 /** Qeydiyyatı açıq turnirlər önə, ləğv olunanlar sona */
 const STATUS_WEIGHT: Record<TournamentStatus, number> = {
@@ -47,7 +47,7 @@ interface Stats {
 
 export function Landing() {
   const { user } = useAuth()
-  const { language, setLanguage } = useLandingLanguage()
+  const { language } = useLanguage()
   const copy = landingCopy[language]
 
   const [board, setBoard] = useState<LeaderboardEntry[]>([])
@@ -100,8 +100,6 @@ export function Landing() {
 
   return (
     <div>
-      <LanguageSwitcher language={language} setLanguage={setLanguage} label={copy.languageLabel} />
-
       <Hero
         user={user}
         leader={board[0]}
@@ -212,7 +210,7 @@ function Hero({
   leader?: LeaderboardEntry
   stats: Stats | null
   copy: LandingCopy
-  language: LandingLanguage
+  language: Language
 }) {
   return (
     /*
@@ -336,41 +334,6 @@ function Hero({
   )
 }
 
-function LanguageSwitcher({
-  language,
-  setLanguage,
-  label,
-}: {
-  language: LandingLanguage
-  setLanguage: (language: LandingLanguage) => void
-  label: string
-}) {
-  return (
-    <div
-      className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-50 flex rounded-full border border-gold-400/30 bg-felt-950/95 p-1 shadow-xl backdrop-blur-md md:bottom-6 md:right-6"
-      role="group"
-      aria-label={label}
-    >
-      {languageOptions.map((option) => (
-        <button
-          key={option.code}
-          type="button"
-          onClick={() => setLanguage(option.code)}
-          aria-pressed={language === option.code}
-          title={option.name}
-          className={cx(
-            'min-w-10 rounded-full px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] transition-colors',
-            language === option.code
-              ? 'bg-gold-400 text-felt-950'
-              : 'text-felt-100/75 hover:bg-white/10 hover:text-ivory',
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 /**
  * Hero-nun alt kənarındakı nazik zolaq — platformanın canlı olduğunun
@@ -385,7 +348,7 @@ function HeroFacts({
   leader?: LeaderboardEntry
   stats: Stats | null
   copy: LandingCopy
-  language: LandingLanguage
+  language: Language
 }) {
   const nf = new Intl.NumberFormat(localeByLanguage[language])
   const facts: { label: string; value: ReactNode }[] = [
@@ -538,7 +501,7 @@ function LeaderTable({
  * Lentdəki maç heç kimin baxış bucağından göstərilmir — qalib solda,
  * məğlub sağda. Ona görə perspektivə bağlı `MatchRow` işlədilmir.
  */
-function RecentMatch({ match: m, language }: { match: Match; language: LandingLanguage }) {
+function RecentMatch({ match: m, language }: { match: Match; language: Language }) {
   const reporterWon = m.winnerId === m.reporter.id
   const winner = reporterWon ? m.reporter : m.opponent
   const loser = reporterWon ? m.opponent : m.reporter
@@ -679,7 +642,7 @@ function ClosingCta({ user, copy }: { user: { fullName: string } | null; copy: L
    Ortaq kiçik hissələr
    ═══════════════════════════════════════════════════════════════ */
 
-function relativeTime(iso: string | null, language: LandingLanguage): string {
+function relativeTime(iso: string | null, language: Language): string {
   if (!iso) return '—'
 
   const date = new Date(iso)

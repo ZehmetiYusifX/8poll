@@ -32,6 +32,8 @@ import { useToast } from '../components/Toast'
 import { extractErrorMessage, mediaUrl } from '../api/client'
 import { formatDateTime } from '../utils/format'
 import { GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { TournamentDetail as TDetail, BracketMatch, GalleryImage } from '../api/types'
 
 export function TournamentDetail() {
@@ -39,6 +41,8 @@ export function TournamentDetail() {
   const tid = Number(id)
   const { user } = useAuth()
   const toast = useToast()
+  const { language } = useLanguage()
+  const copy = appCopy[language].tournamentDetail
 
   const [data, setData] = useState<TDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -91,16 +95,16 @@ export function TournamentDetail() {
   }, [data, totalRounds])
 
   const roundName = (r: number) => {
-    if (r === totalRounds) return 'Final'
-    if (r === totalRounds - 1) return 'Yarımfinal'
-    if (r === totalRounds - 2) return 'Çərəkfinal'
-    return `${r}. raund`
+    if (r === totalRounds) return copy.final
+    if (r === totalRounds - 1) return copy.semifinal
+    if (r === totalRounds - 2) return copy.quarterfinal
+    return copy.roundN(r)
   }
 
   if (loading) return <DetailSkeleton />
-  if (!t || !data) return <Empty title="Turnir tapılmadı" hint={error || 'Bu turnir mövcud deyil.'} />
+  if (!t || !data) return <Empty title={copy.notFoundTitle} hint={error || copy.notFoundHint} />
 
-  const st = statusMeta[t.status]
+  const st = statusMeta[language][t.status]
   const fillPct = Math.min(100, Math.round((data.participants.length / t.maxParticipants) * 100))
   const canStart = data.participants.length >= 2
 
@@ -118,7 +122,7 @@ export function TournamentDetail() {
             {t.name}
             <Badge tone={st.tone}>{st.text}</Badge>
             {/* Seed sıralaması bu intizamın reytinqinə görə qurulub */}
-            <Badge tone="neutral">{GAME_TYPE_LABEL[t.gameType]}</Badge>
+            <Badge tone="neutral">{GAME_TYPE_LABEL[language][t.gameType]}</Badge>
           </span>
         }
         subtitle={
@@ -139,7 +143,7 @@ export function TournamentDetail() {
                 className={buttonClass('primary', 'md')}
               >
                 <IconUsers size={16} />
-                Qoşulmaq üçün daxil olun
+                {copy.loginToJoin}
               </Link>
             )}
             {t.status === 'REGISTRATION' && !!user && !isOwner && (
@@ -147,17 +151,17 @@ export function TournamentDetail() {
                 <Button
                   variant="secondary"
                   loading={busy}
-                  onClick={() => act(() => TournamentApi.leave(tid), 'Turnirdən ayrıldınız')}
+                  onClick={() => act(() => TournamentApi.leave(tid), copy.leftTournament)}
                 >
-                  Ayrıl
+                  {copy.leave}
                 </Button>
               ) : (
                 <Button
                   loading={busy}
                   icon={<IconUsers size={16} />}
-                  onClick={() => act(() => TournamentApi.join(tid), 'Turnirə qoşuldunuz')}
+                  onClick={() => act(() => TournamentApi.join(tid), copy.joinedTournament)}
                 >
-                  Qoşul
+                  {copy.join}
                 </Button>
               )
             )}
@@ -165,10 +169,10 @@ export function TournamentDetail() {
               <Button
                 loading={busy}
                 disabled={!canStart}
-                title={canStart ? undefined : 'Ən azı 2 iştirakçı lazımdır'}
-                onClick={() => act(() => TournamentApi.start(tid), 'Turnir başladı')}
+                title={canStart ? undefined : copy.minParticipants}
+                onClick={() => act(() => TournamentApi.start(tid), copy.tournamentStarted)}
               >
-                Turniri başlat
+                {copy.startTournament}
               </Button>
             )}
           </>
@@ -188,7 +192,7 @@ export function TournamentDetail() {
           </span>
           <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gold-300">
-              Turnir qalibi
+              {copy.tournamentWinner}
             </div>
             <Link
               to={`/players/${t.winner.id}`}
@@ -202,11 +206,11 @@ export function TournamentDetail() {
 
       {t.status === 'REGISTRATION' ? (
         <section>
-          <SectionHeader title="İştirakçılar" />
+          <SectionHeader title={copy.participants} />
 
           <div className="mb-4">
             <div className="flex items-center justify-between text-xs text-ink-500">
-              <span>Qeydiyyat</span>
+              <span>{copy.registration}</span>
               <span className="font-semibold tabular-nums text-ink-700">
                 {data.participants.length}
                 <span className="font-normal text-ink-400">/{t.maxParticipants}</span>
@@ -223,8 +227,8 @@ export function TournamentDetail() {
           {data.participants.length === 0 ? (
             <Empty
               icon={<IconUsers size={20} />}
-              title="Hələ iştirakçı yoxdur"
-              hint="İlk qoşulan siz olun — cədvəldəki yerinizi tutun."
+              title={copy.emptyParticipantsTitle}
+              hint={copy.emptyParticipantsHint}
             />
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -262,7 +266,7 @@ export function TournamentDetail() {
         </section>
       ) : (
         <section>
-          <SectionHeader title="Turnir cədvəli" />
+          <SectionHeader title={copy.bracket} />
           <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-4">
             {rounds.map((matches, i) => (
               <div
@@ -302,7 +306,7 @@ export function TournamentDetail() {
           onDone={(updated) => {
             setData(updated)
             setReportMatch(null)
-            toast.success('Nəticə qeydə alındı')
+            toast.success(copy.resultRecorded)
           }}
         />
       )}
@@ -317,6 +321,8 @@ export function TournamentDetail() {
  * əksər turnirlərin şəkli olmayacaq, boş bölmə səhifəni uzadardı.
  */
 function TournamentPhotos({ tournamentId }: { tournamentId: number }) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].tournamentDetail
   const [images, setImages] = useState<GalleryImage[]>([])
   const [index, setIndex] = useState<number | null>(null)
 
@@ -337,14 +343,14 @@ function TournamentPhotos({ tournamentId }: { tournamentId: number }) {
   return (
     <section>
       <SectionHeader
-        title="Şəkillər"
+        title={copy.photos}
         count={images.length}
         action={
           <Link
             to="/gallery"
             className="text-sm font-medium text-felt-300 transition-colors hover:text-felt-200"
           >
-            Qalereya
+            {copy.gallery}
           </Link>
         }
       />
@@ -391,6 +397,8 @@ function BracketCard({
   canReport: boolean
   onReport: () => void
 }) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].tournamentDetail
   const decided = match.winnerId != null
   const isBye =
     match.round === 1 && (!match.player1 || !match.player2) && (match.player1 || match.player2) != null
@@ -417,12 +425,12 @@ function BracketCard({
               )}
             >
               {player.fullName}
-              {isMe && <span className="ml-1 text-[10px] font-bold uppercase text-felt-400">siz</span>}
+              {isMe && <span className="ml-1 text-[10px] font-bold uppercase text-felt-400">{copy.you}</span>}
             </span>
             {isWinner && <IconCheck size={13} className="shrink-0 text-felt-400" />}
           </>
         ) : (
-          <span className="flex-1 truncate text-sm italic">{isBye ? 'Bay' : 'Gözlənilir'}</span>
+          <span className="flex-1 truncate text-sm italic">{isBye ? copy.bye : copy.awaiting}</span>
         )}
         <span
           className={cx(
@@ -452,7 +460,7 @@ function BracketCard({
         {canReport && (
           <div className="border-t border-rail bg-cream p-1.5">
             <Button variant="secondary" size="sm" block onClick={onReport}>
-              Nəticə daxil et
+              {copy.reportResult}
             </Button>
           </div>
         )}
@@ -460,7 +468,7 @@ function BracketCard({
 
       {match.status === 'READY' && !canReport && (
         <span className="absolute -top-1.5 left-2 rounded-full bg-honey-600 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-white">
-          Hazır
+          {copy.ready}
         </span>
       )}
     </div>
@@ -497,6 +505,8 @@ function ReportBracketModal({
   onClose: () => void
   onDone: (updated: TDetail) => void
 }) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].tournamentDetail
   const [s1, setS1] = useState('')
   const [s2, setS2] = useState('')
   const [loading, setLoading] = useState(false)
@@ -506,9 +516,9 @@ function ReportBracketModal({
     const p1 = Number(s1)
     const p2 = Number(s2)
     if (s1 === '' || s2 === '' || Number.isNaN(p1) || Number.isNaN(p2)) {
-      return setError('Hər iki hesabı daxil edin')
+      return setError(copy.bothScoresRequired)
     }
-    if (p1 === p2) return setError('Turnir maçında heç-heçə ola bilməz')
+    if (p1 === p2) return setError(copy.noDraws)
 
     setLoading(true)
     setError('')
@@ -522,10 +532,10 @@ function ReportBracketModal({
   }
 
   return (
-    <Modal open onClose={onClose} title="Nəticə daxil et" description="Qalib növbəti mərhələyə keçəcək.">
+    <Modal open onClose={onClose} title={copy.reportResult} description={copy.reportDescription}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Field label={match.player1?.fullName ?? 'Oyunçu 1'}>
+          <Field label={match.player1?.fullName ?? copy.player1}>
             <Input
               type="number"
               min={0}
@@ -536,7 +546,7 @@ function ReportBracketModal({
               autoFocus
             />
           </Field>
-          <Field label={match.player2?.fullName ?? 'Oyunçu 2'}>
+          <Field label={match.player2?.fullName ?? copy.player2}>
             <Input
               type="number"
               min={0}
@@ -552,10 +562,10 @@ function ReportBracketModal({
 
         <div className="flex gap-2">
           <Button variant="secondary" block onClick={onClose} disabled={loading}>
-            Ləğv et
+            {copy.cancel}
           </Button>
           <Button block loading={loading} onClick={submit}>
-            Təsdiqlə
+            {copy.confirm}
           </Button>
         </div>
       </div>

@@ -35,6 +35,7 @@ import {
 import { useToast } from '../components/Toast'
 import { extractErrorMessage, mediaUrl } from '../api/client'
 import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
 import type { GameType, Venue, Tournament } from '../api/types'
 
 export function VenueProfile() {
@@ -493,6 +494,7 @@ function CreateTournamentModal({
   onClose: () => void
   onCreated: () => void
 }) {
+  const { language } = useLanguage()
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -543,7 +545,7 @@ function CreateTournamentModal({
           >
             {GAME_TYPES.map((t) => (
               <option key={t} value={t}>
-                {GAME_TYPE_LABEL[t]}
+                {GAME_TYPE_LABEL[language][t]}
               </option>
             ))}
           </Select>

@@ -16,10 +16,12 @@ import {
 import { CoachApi, VenueApi } from '../api'
 import { setToken, extractErrorMessage } from '../api/client'
 import { GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
 import type { GameType, Venue } from '../api/types'
 
 export function CoachRegister() {
   const { setUser } = useAuth()
+  const { language } = useLanguage()
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
@@ -151,7 +153,7 @@ export function CoachRegister() {
                         : 'border-rail-strong text-ink-500 hover:border-gold-400/30 hover:text-ink-800',
                     )}
                   >
-                    {GAME_TYPE_LABEL[g]}
+                    {GAME_TYPE_LABEL[language][g]}
                   </button>
                 )
               })}

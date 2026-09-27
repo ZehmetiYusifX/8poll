@@ -19,7 +19,8 @@ import { useToast } from '../components/Toast'
 import { extractErrorMessage } from '../api/client'
 import { timeAgo } from '../utils/format'
 import { GAME_TYPE_LABEL } from '../constants/gameTypes'
-import type { Challenge, ChallengeStatus, GameType, PlayerSummary } from '../api/types'
+import { useLanguage } from '../context/LanguageContext'
+import type { Challenge, ChallengeStatus } from '../api/types'
 
 const STATUS: Record<ChallengeStatus, { text: string; tone: BadgeTone }> = {
   PENDING: { text: 'Cavab gözləyir', tone: 'yellow' },
@@ -33,17 +34,14 @@ type Tab = 'incoming' | 'outgoing'
 
 export function Challenges() {
   const toast = useToast()
+  const { language } = useLanguage()
   const [tab, setTab] = useState<Tab>('incoming')
   const [incoming, setIncoming] = useState<Challenge[]>([])
   const [outgoing, setOutgoing] = useState<Challenge[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState('')
-  const [reportFor, setReportFor] = useState<{
-    opponent: PlayerSummary
-    challengeId: number
-    gameType: GameType
-  } | null>(null)
+  const [reportFor, setReportFor] = useState<Challenge | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -155,7 +153,7 @@ export function Challenges() {
                     <span>@{other.username}</span>
                     <span aria-hidden>·</span>
                     {/* Dəvətin intizamı — nəticə də bu intizamda qeyd olunacaq */}
-                    <span className="text-ink-500">{GAME_TYPE_LABEL[c.gameType]}</span>
+                    <span className="text-ink-500">{GAME_TYPE_LABEL[language][c.gameType]}</span>
                     <span aria-hidden>·</span>
                     <span>{timeAgo(c.createdAt)}</span>
                     {c.venue && (
@@ -211,13 +209,7 @@ export function Challenges() {
                         <Button
                           size="sm"
                           icon={<IconPlus size={15} />}
-                          onClick={() =>
-                            setReportFor({
-                              opponent: other,
-                              challengeId: c.id,
-                              gameType: c.gameType,
-                            })
-                          }
+                          onClick={() => setReportFor(c)}
                         >
                           Nəticə daxil et
                         </Button>
@@ -236,9 +228,7 @@ export function Challenges() {
       {reportFor && (
         <ReportMatchModal
           open
-          opponent={reportFor.opponent}
-          challengeId={reportFor.challengeId}
-          lockedGameType={reportFor.gameType}
+          challenge={reportFor}
           onClose={() => setReportFor(null)}
           onDone={load}
         />

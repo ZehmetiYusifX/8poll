@@ -25,6 +25,7 @@ import { useToast } from '../components/Toast'
 import { extractErrorMessage } from '../api/client'
 import { timeAgo } from '../utils/format'
 import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
 import {
   COACHING_LEVELS,
   DEFAULT_FORMAT,
@@ -77,6 +78,7 @@ const EMPTY_FORM: PackageForm = {
 /** Məşqçinin iş masası — paketlər və gələn sifarişlər */
 export function CoachPanel() {
   const toast = useToast()
+  const { language } = useLanguage()
   const [tab, setTab] = useState<Tab>('packages')
   const [packages, setPackages] = useState<LessonPackage[]>([])
   const [orders, setOrders] = useState<LessonOrder[]>([])
@@ -359,7 +361,7 @@ export function CoachPanel() {
                 note={o.message}
                 actions={
                   <>
-                    <Badge tone={ORDER_STATUS_TONE[o.status]}>{ORDER_STATUS_LABEL[o.status]}</Badge>
+                    <Badge tone={ORDER_STATUS_TONE[o.status]}>{ORDER_STATUS_LABEL[language][o.status]}</Badge>
                     {o.status === 'PENDING' && (
                       <>
                         <Button
@@ -442,7 +444,7 @@ export function CoachPanel() {
               <Select value={form.gameType} onChange={set('gameType')}>
                 {GAME_TYPES.map((g) => (
                   <option key={g} value={g}>
-                    {GAME_TYPE_LABEL[g]}
+                    {GAME_TYPE_LABEL[language][g]}
                   </option>
                 ))}
               </Select>
@@ -451,7 +453,7 @@ export function CoachPanel() {
               <Select value={form.level} onChange={set('level')}>
                 {COACHING_LEVELS.map((l) => (
                   <option key={l} value={l}>
-                    {LEVEL_LABEL[l]}
+                    {LEVEL_LABEL[language][l]}
                   </option>
                 ))}
               </Select>
@@ -463,7 +465,7 @@ export function CoachPanel() {
               <Select value={form.format} onChange={set('format')}>
                 {LESSON_FORMATS.map((f) => (
                   <option key={f} value={f}>
-                    {FORMAT_LABEL[f]}
+                    {FORMAT_LABEL[language][f]}
                   </option>
                 ))}
               </Select>

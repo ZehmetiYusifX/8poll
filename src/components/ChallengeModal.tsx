@@ -6,6 +6,8 @@ import { IconCheck, IconSwords } from './icons'
 import { ChallengeApi, VenueApi } from '../api'
 import { extractErrorMessage } from '../api/client'
 import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { GameType, PlayerSummary, Player, Venue } from '../api/types'
 
 interface Props {
@@ -19,9 +21,9 @@ interface Props {
 
 const MESSAGE_LIMIT = 300
 
-const QUICK_MESSAGES = ['Sabah axşam bir oyun?', 'Bu həftə sonu oynayaq?', 'Revanş vaxtıdır!']
-
 export function ChallengeModal({ opponent, open, onClose, onDone, defaultGameType }: Props) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].challengeModal
   const [message, setMessage] = useState('')
   const [venueId, setVenueId] = useState('')
   const [gameType, setGameType] = useState<GameType>(defaultGameType ?? DEFAULT_GAME_TYPE)
@@ -64,13 +66,13 @@ export function ChallengeModal({ opponent, open, onClose, onDone, defaultGameTyp
   }
 
   return (
-    <Modal open={open} onClose={close} title="Dəvət göndər">
+    <Modal open={open} onClose={close} title={copy.title}>
       <div className="mb-5 flex items-center gap-3.5 rounded-xl border border-rail bg-cream p-3.5">
         <Avatar name={opponent.fullName} color={opponent.avatarColor} src={opponent.avatarUrl} size={46} />
         <div className="min-w-0">
           <div className="truncate font-semibold text-ink-900">{opponent.fullName}</div>
           <div className="truncate text-sm text-ink-500">
-            @{opponent.username} · <span className="tabular-nums">{opponent.rating} xal</span>
+            @{opponent.username} · <span className="tabular-nums">{opponent.rating} {copy.points}</span>
           </div>
         </div>
       </div>
@@ -81,30 +83,28 @@ export function ChallengeModal({ opponent, open, onClose, onDone, defaultGameTyp
             <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-felt-600 text-ivory">
               <IconCheck size={22} />
             </span>
-            <p className="font-medium text-felt-300">Dəvət göndərildi</p>
-            <p className="mt-1 text-sm text-felt-300/80">
-              <b>{opponent.username}</b> cavab verdikdə Dəvətlər bölməsində görəcəksiniz.
-            </p>
+            <p className="font-medium text-felt-300">{copy.sentTitle}</p>
+            <p className="mt-1 text-sm text-felt-300/80">{copy.sentHint(opponent.username)}</p>
           </div>
           <Button variant="secondary" block onClick={close}>
-            Bağla
+            {copy.close}
           </Button>
         </div>
       ) : (
         <div className="space-y-4">
-          <Field label="Oyun növü" hint="Dəvət bu intizam üzrə göndəriləcək">
+          <Field label={copy.gameTypeLabel} hint={copy.gameTypeHint}>
             <Select value={gameType} onChange={(e) => setGameType(e.target.value as GameType)}>
               {GAME_TYPES.map((t) => (
                 <option key={t} value={t}>
-                  {GAME_TYPE_LABEL[t]}
+                  {GAME_TYPE_LABEL[language][t]}
                 </option>
               ))}
             </Select>
           </Field>
 
-          <Field label="Məkan" optional hint="Harada oynamaq istədiyinizi bildirin">
+          <Field label={copy.venueLabel} optional hint={copy.venueHint}>
             <Select value={venueId} onChange={(e) => setVenueId(e.target.value)}>
-              <option value="">Məkan seçilməyib</option>
+              <option value="">{copy.venueUnselected}</option>
               {venues.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name}
@@ -114,18 +114,18 @@ export function ChallengeModal({ opponent, open, onClose, onDone, defaultGameTyp
             </Select>
           </Field>
 
-          <Field label="Mesaj" optional hint={`${message.length}/${MESSAGE_LIMIT} simvol`}>
+          <Field label={copy.messageLabel} optional hint={copy.messageHint(message.length, MESSAGE_LIMIT)}>
             <Textarea
               rows={3}
               maxLength={MESSAGE_LIMIT}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Sabah axşam bir oyun?"
+              placeholder={copy.messagePlaceholder}
             />
           </Field>
 
           <div className="flex flex-wrap gap-1.5">
-            {QUICK_MESSAGES.map((m) => (
+            {copy.quickMessages.map((m) => (
               <button
                 key={m}
                 type="button"
@@ -141,10 +141,10 @@ export function ChallengeModal({ opponent, open, onClose, onDone, defaultGameTyp
 
           <div className="flex gap-2 pt-1">
             <Button variant="secondary" block onClick={close} disabled={loading}>
-              Ləğv et
+              {copy.cancel}
             </Button>
             <Button block loading={loading} icon={<IconSwords size={16} />} onClick={submit}>
-              Göndər
+              {copy.send}
             </Button>
           </div>
         </div>

@@ -1,29 +1,37 @@
 import type { BadgeTone } from '../components/ui'
 import type { CoachingLevel, LessonFormat, LessonOrderStatus } from '../api/types'
+import type { Language } from '../context/LanguageContext'
 
 /** Səviyyələrin göstərilmə sırası — filtrlərdə və seçimlərdə eyni olsun deyə */
 export const COACHING_LEVELS: CoachingLevel[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
 
-export const LEVEL_LABEL: Record<CoachingLevel, string> = {
-  BEGINNER: 'Başlanğıc',
-  INTERMEDIATE: 'Orta',
-  ADVANCED: 'Peşəkar',
+export const LEVEL_LABEL: Record<Language, Record<CoachingLevel, string>> = {
+  az: { BEGINNER: 'Başlanğıc', INTERMEDIATE: 'Orta', ADVANCED: 'Peşəkar' },
+  en: { BEGINNER: 'Beginner', INTERMEDIATE: 'Intermediate', ADVANCED: 'Advanced' },
+  ru: { BEGINNER: 'Начальный', INTERMEDIATE: 'Средний', ADVANCED: 'Продвинутый' },
 }
 
 export const LESSON_FORMATS: LessonFormat[] = ['INDIVIDUAL', 'GROUP']
 
-export const FORMAT_LABEL: Record<LessonFormat, string> = {
-  INDIVIDUAL: 'Fərdi',
-  GROUP: 'Qrup',
+export const FORMAT_LABEL: Record<Language, Record<LessonFormat, string>> = {
+  az: { INDIVIDUAL: 'Fərdi', GROUP: 'Qrup' },
+  en: { INDIVIDUAL: 'Individual', GROUP: 'Group' },
+  ru: { INDIVIDUAL: 'Индивидуально', GROUP: 'Группа' },
 }
 
-export const ORDER_STATUS_LABEL: Record<LessonOrderStatus, string> = {
-  PENDING: 'Gözləyir',
-  ACCEPTED: 'Qəbul edildi',
-  DECLINED: 'İmtina edildi',
-  CANCELLED: 'Ləğv edildi',
-  PAID: 'Ödənildi',
-  COMPLETED: 'Tamamlandı',
+export const ORDER_STATUS_LABEL: Record<Language, Record<LessonOrderStatus, string>> = {
+  az: {
+    PENDING: 'Gözləyir', ACCEPTED: 'Qəbul edildi', DECLINED: 'İmtina edildi',
+    CANCELLED: 'Ləğv edildi', PAID: 'Ödənildi', COMPLETED: 'Tamamlandı',
+  },
+  en: {
+    PENDING: 'Pending', ACCEPTED: 'Accepted', DECLINED: 'Declined',
+    CANCELLED: 'Cancelled', PAID: 'Paid', COMPLETED: 'Completed',
+  },
+  ru: {
+    PENDING: 'Ожидает', ACCEPTED: 'Принято', DECLINED: 'Отклонено',
+    CANCELLED: 'Отменено', PAID: 'Оплачено', COMPLETED: 'Завершено',
+  },
 }
 
 /** Status rəngləri mövcud `Badge` tone-larından götürülür — yeni rəng əlavə edilmir */

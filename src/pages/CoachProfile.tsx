@@ -19,12 +19,16 @@ import {
 import { IconAcademy, IconArrowRight, IconPencil, IconPhone, IconPin } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import { GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { Coach, LessonPackage } from '../api/types'
 
 export function CoachProfile() {
   const { id } = useParams()
   const coachId = Number(id)
   const { user } = useAuth()
+  const { language } = useLanguage()
+  const copy = appCopy[language].coachProfile
 
   const [coach, setCoach] = useState<Coach | null>(null)
   const [packages, setPackages] = useState<LessonPackage[]>([])
@@ -49,7 +53,7 @@ export function CoachProfile() {
   }, [load])
 
   if (loading) return <PageLoader />
-  if (!coach) return <Alert tone="error">{error || 'Məşqçi tapılmadı'}</Alert>
+  if (!coach) return <Alert tone="error">{error || copy.notFound}</Alert>
 
   const isSelf = user?.id === coach.player.id
   const p = coach.player
@@ -61,7 +65,7 @@ export function CoachProfile() {
         className="mb-4 inline-flex items-center gap-1 text-sm text-ink-500 transition-colors hover:text-ink-900"
       >
         <IconArrowRight size={15} className="rotate-180" />
-        Məşqçilər
+        {copy.backToCoaches}
       </Link>
 
       <header className="mb-6">
@@ -70,7 +74,7 @@ export function CoachProfile() {
             <Avatar name={p.fullName} color={p.avatarColor} src={p.avatarUrl} size={72} />
             <div className="min-w-0">
               <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-300">
-                Məşqçi
+                {copy.coach}
               </div>
               <h1 className="font-display text-[26px] leading-tight font-semibold text-ink-950 sm:text-[30px]">
                 {p.fullName}
@@ -81,11 +85,11 @@ export function CoachProfile() {
                 <TierBadge tier={p.tier} />
                 {coach.experienceYears != null && (
                   <Badge tone="gold" className="tabular-nums">
-                    {coach.experienceYears} il təcrübə
+                    {copy.yearsExperience(coach.experienceYears)}
                   </Badge>
                 )}
                 {coach.gameTypes.map((g) => (
-                  <Badge key={g}>{GAME_TYPE_LABEL[g]}</Badge>
+                  <Badge key={g}>{GAME_TYPE_LABEL[language][g]}</Badge>
                 ))}
               </div>
             </div>
@@ -95,12 +99,12 @@ export function CoachProfile() {
             {isSelf && (
               <Link to="/coaches/panel">
                 <Button variant="secondary" icon={<IconPencil size={16} />}>
-                  Panelim
+                  {copy.myPanel}
                 </Button>
               </Link>
             )}
             <Link to={`/players/${p.id}`}>
-              <Button variant="ghost">Oyunçu profili</Button>
+              <Button variant="ghost">{copy.playerProfile}</Button>
             </Link>
           </div>
         </div>
@@ -111,7 +115,7 @@ export function CoachProfile() {
         <div>
           {coach.about && (
             <>
-              <SectionHeader title="Haqqında" />
+              <SectionHeader title={copy.about} />
               <Card>
                 <p className="whitespace-pre-line text-sm leading-relaxed text-ink-600">
                   {coach.about}
@@ -120,20 +124,16 @@ export function CoachProfile() {
             </>
           )}
 
-          <SectionHeader title="Dərs paketləri" count={packages.length} className="mt-7" />
+          <SectionHeader title={copy.lessonPackages} count={packages.length} className="mt-7" />
           {packages.length === 0 ? (
             <Empty
               icon={<IconAcademy size={20} />}
-              title="Hazırda aktiv paket yoxdur"
-              hint={
-                isSelf
-                  ? 'Panelinizdən ilk paketi yaradın — vitrində dərhal görünəcək.'
-                  : 'Məşqçi yeni paket yerləşdirdikdə burada görünəcək.'
-              }
+              title={copy.noPackagesTitle}
+              hint={isSelf ? copy.noPackagesHintSelf : copy.noPackagesHintOther}
               action={
                 isSelf ? (
                   <Link to="/coaches/panel">
-                    <Button>Paket yarat</Button>
+                    <Button>{copy.createPackage}</Button>
                   </Link>
                 ) : undefined
               }
@@ -150,12 +150,12 @@ export function CoachProfile() {
         <aside className="space-y-4">
           <Card>
             <div className="grid grid-cols-3 gap-2">
-              <Stat value={p.rating} label="Reytinq" tone="accent" />
-              <Stat value={p.gamesPlayed} label="Maç" />
-              <Stat value={p.wins} label="Qələbə" tone="win" />
+              <Stat value={p.rating} label={copy.rating} tone="accent" />
+              <Stat value={p.gamesPlayed} label={copy.matches} />
+              <Stat value={p.wins} label={copy.wins} tone="win" />
             </div>
             <p className="mt-3 border-t border-rail pt-3 text-xs leading-relaxed text-ink-400">
-              Məşqçinin öz oyun statistikası — platformada qeyd olunmuş maçlardan gəlir.
+              {copy.statsNote}
             </p>
           </Card>
 

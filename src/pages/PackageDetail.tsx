@@ -21,6 +21,7 @@ import { IconAcademy, IconArrowRight, IconPencil, IconPhone, IconPin } from '../
 import { useToast } from '../components/Toast'
 import { extractErrorMessage } from '../api/client'
 import { ORDER_STATUS_LABEL, ORDER_STATUS_TONE, formatPrice, isActiveOrder } from '../constants/academy'
+import { useLanguage } from '../context/LanguageContext'
 import type { LessonOrder, LessonPackage } from '../api/types'
 
 export function PackageDetail() {
@@ -29,6 +30,7 @@ export function PackageDetail() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+  const { language } = useLanguage()
 
   const [pkg, setPkg] = useState<LessonPackage | null>(null)
   const [myOrder, setMyOrder] = useState<LessonOrder | null>(null)
@@ -194,7 +196,7 @@ export function PackageDetail() {
                   <div className="flex items-center justify-between gap-2 text-sm text-ink-600">
                     <span>Sifarişiniz</span>
                     <Badge tone={ORDER_STATUS_TONE[myOrder.status]}>
-                      {ORDER_STATUS_LABEL[myOrder.status]}
+                      {ORDER_STATUS_LABEL[language][myOrder.status]}
                     </Badge>
                   </div>
                   <Link to="/academy/mine">

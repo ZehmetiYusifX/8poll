@@ -5,6 +5,8 @@ import { Badge, Card, Segmented, Skeleton, cx } from './ui'
 import { IconClock, IconPin, IconUsers } from './icons'
 import { GAME_TYPE_LABEL } from '../constants/gameTypes'
 import { FORMAT_LABEL, LEVEL_LABEL, formatPrice } from '../constants/academy'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { LessonPackage } from '../api/types'
 
 /**
@@ -13,15 +15,17 @@ import type { LessonPackage } from '../api/types'
  */
 export function AcademyTabs({ value }: { value: 'packages' | 'coaches' }) {
   const navigate = useNavigate()
+  const { language } = useLanguage()
+  const copy = appCopy[language].academy
   return (
     <Segmented
       className="mb-5"
-      label="Akademiya bölməsi"
+      label={copy.tabsLabel}
       value={value}
       onChange={(v) => navigate(v === 'packages' ? '/academy' : '/coaches')}
       items={[
-        { value: 'packages', label: 'Dərs paketləri' },
-        { value: 'coaches', label: 'Məşqçilər' },
+        { value: 'packages', label: copy.packages },
+        { value: 'coaches', label: copy.coaches },
       ]}
     />
   )
@@ -29,21 +33,23 @@ export function AcademyTabs({ value }: { value: 'packages' | 'coaches' }) {
 
 /** Paketin quru faktları — kartda və detal səhifəsində eyni sırada oxunur */
 export function PackageMeta({ pkg, className = '' }: { pkg: LessonPackage; className?: string }) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].academy
   return (
     <div className={cx('flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-400', className)}>
-      <span className="text-ink-500">{GAME_TYPE_LABEL[pkg.gameType]}</span>
+      <span className="text-ink-500">{GAME_TYPE_LABEL[language][pkg.gameType]}</span>
       <Dot />
-      <span>{LEVEL_LABEL[pkg.level]}</span>
+      <span>{LEVEL_LABEL[language][pkg.level]}</span>
       <Dot />
       <span className="inline-flex items-center gap-1">
         {pkg.format === 'GROUP' ? <IconUsers size={12} /> : null}
-        {FORMAT_LABEL[pkg.format]}
-        {pkg.format === 'GROUP' && pkg.groupSize ? ` · ${pkg.groupSize} nəfər` : ''}
+        {FORMAT_LABEL[language][pkg.format]}
+        {pkg.format === 'GROUP' && pkg.groupSize ? ` · ${copy.people(pkg.groupSize)}` : ''}
       </span>
       <Dot />
       <span className="inline-flex items-center gap-1 tabular-nums">
         <IconClock size={12} />
-        {pkg.lessonCount} dərs × {pkg.lessonMinutes} dəq
+        {copy.lessonsUnit(pkg.lessonCount, pkg.lessonMinutes)}
       </span>
     </div>
   )
@@ -54,6 +60,8 @@ function Dot() {
 }
 
 export function PackageCard({ pkg, footer }: { pkg: LessonPackage; footer?: ReactNode }) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].academy
   return (
     <Card interactive={!footer} className="flex h-full flex-col">
       <div className="flex items-start justify-between gap-3">
@@ -62,7 +70,7 @@ export function PackageCard({ pkg, footer }: { pkg: LessonPackage; footer?: Reac
             {pkg.title}
           </Link>
         </h3>
-        {!pkg.active && <Badge tone="neutral">Satışda deyil</Badge>}
+        {!pkg.active && <Badge tone="neutral">{copy.notForSale}</Badge>}
       </div>
 
       <PackageMeta pkg={pkg} className="mt-2" />

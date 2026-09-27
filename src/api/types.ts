@@ -238,12 +238,16 @@ export interface ReportResultRequest {
   player2Score: number
 }
 
+/**
+ * Nəticə yalnız qəbul edilmiş dəvət üzrə daxil edilir — `challengeId` məcburidir.
+ * İntizam dəvətdən götürülür; `gameType` serverdə yalnız uyğunluq yoxlanışına gedir.
+ */
 export interface ReportMatchRequest {
   opponentId: number
   gameType: GameType
   myScore: number
   opponentScore: number
-  challengeId?: number | null
+  challengeId: number
 }
 
 // --- Qalereya ---

@@ -4,10 +4,11 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '../context/AuthContext'
 import { ChallengeApi, MatchApi } from '../api'
 import { Avatar } from './Avatar'
-import { BrandLink, SLOGAN } from './Brand'
+import { BrandLink } from './Brand'
 import { Count, buttonClass, cx } from './ui'
-import { useLandingLanguage } from '../context/LandingLanguageContext'
+import { useLanguage } from '../context/LanguageContext'
 import { landingCopy } from '../i18n/landing'
+import { LanguageSwitcher } from './LanguageSwitcher'
 import {
   IconAcademy,
   IconBuilding,
@@ -36,33 +37,13 @@ interface NavItem {
   primary?: boolean
 }
 
-/*
- * Qonaq da bu çərçivə ilə gəzir — reytinq, oyunçu, məkan və turnir
- * bölmələri backend-də də açıqdır. Ona görə naviqasiya iki hissəyə
- * bölünür: hamıya açıq bölmələr və yalnız üzvə aid olanlar.
- */
-const PUBLIC_NAV: NavItem[] = [
-  { to: '/leaderboard', label: 'Reytinq', icon: IconTrophy, primary: true },
-  { to: '/tournaments', label: 'Turnirlər', short: 'Turnir', icon: IconMedal },
-  { to: '/academy', label: 'Akademiya', short: 'Dərs', icon: IconAcademy },
-  { to: '/venues', label: 'Məkanlar', short: 'Məkan', icon: IconBuilding },
-  { to: '/gallery', label: 'Qalereya', short: 'Şəkil', icon: IconImage },
-]
-
-const MEMBER_NAV: NavItem[] = [
-  { to: '/friends', label: 'Dostlar', short: 'Dostlar', icon: IconUsers, primary: true },
-  { to: '/challenges', label: 'Dəvətlər', short: 'Dəvət', icon: IconSwords, counter: 'challenges', primary: true },
-  { to: '/matches', label: 'Maçlarım', short: 'Maçlar', icon: IconTable, counter: 'matches', primary: true },
-]
-
 const POLL_MS = 30_000
 
 export function Layout() {
   const { user, logout } = useAuth()
-  const { language } = useLandingLanguage()
+  const { language, setLanguage } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
-  const isLanding = location.pathname === '/'
   const landingText = landingCopy[language]
   const shell = landingText.shell
 
@@ -70,41 +51,34 @@ export function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Qonaq üçün ana səhifə təqdimat səhifəsidir, üzv üçün öz paneli
-  const publicNav: NavItem[] = isLanding
-    ? [
-        { to: '/leaderboard', label: shell.ranking, icon: IconTrophy, primary: true },
-        { to: '/tournaments', label: shell.tournaments, short: shell.tournamentShort, icon: IconMedal },
-        { to: '/academy', label: shell.academy, short: shell.lessonShort, icon: IconAcademy },
-        { to: '/venues', label: shell.venues, short: shell.venueShort, icon: IconBuilding },
-        { to: '/gallery', label: shell.gallery, short: shell.photoShort, icon: IconImage },
-      ]
-    : PUBLIC_NAV
+  const publicNav: NavItem[] = [
+    { to: '/leaderboard', label: shell.ranking, icon: IconTrophy, primary: true },
+    { to: '/tournaments', label: shell.tournaments, short: shell.tournamentShort, icon: IconMedal },
+    { to: '/academy', label: shell.academy, short: shell.lessonShort, icon: IconAcademy },
+    { to: '/venues', label: shell.venues, short: shell.venueShort, icon: IconBuilding },
+    { to: '/gallery', label: shell.gallery, short: shell.photoShort, icon: IconImage },
+  ]
 
-  const memberNav: NavItem[] = isLanding
-    ? [
-        { to: '/friends', label: shell.players, short: shell.playerShort, icon: IconUsers, primary: true },
-        { to: '/challenges', label: shell.challenges, short: shell.challengeShort, icon: IconSwords, counter: 'challenges', primary: true },
-        { to: '/matches', label: shell.matches, short: shell.matchesShort, icon: IconTable, counter: 'matches', primary: true },
-      ]
-    : MEMBER_NAV
+  const memberNav: NavItem[] = [
+    { to: '/friends', label: shell.players, short: shell.playerShort, icon: IconUsers, primary: true },
+    { to: '/challenges', label: shell.challenges, short: shell.challengeShort, icon: IconSwords, counter: 'challenges', primary: true },
+    { to: '/matches', label: shell.matches, short: shell.matchesShort, icon: IconTable, counter: 'matches', primary: true },
+  ]
 
   const home: NavItem = user
-    ? { to: '/dashboard', label: isLanding ? shell.dashboard : 'Panel', short: isLanding ? shell.dashboard : 'Panel', icon: IconHome, end: true, primary: true }
-    : { to: '/', label: isLanding ? shell.home : 'Ana səhifə', short: isLanding ? shell.homeShort : 'Əsas', icon: IconHome, end: true, primary: true }
+    ? { to: '/dashboard', label: shell.dashboard, short: shell.dashboard, icon: IconHome, end: true, primary: true }
+    : { to: '/', label: shell.home, short: shell.homeShort, icon: IconHome, end: true, primary: true }
 
   const navItems: NavItem[] = user
     ? [
         home,
         ...publicNav,
         ...memberNav,
-        ...(user.role === 'VENUE_OWNER'
-          ? [{ to: '/venues/mine', label: isLanding ? shell.myVenue : 'Məkanım', icon: IconBuilding }]
-          : []),
+        ...(user.role === 'VENUE_OWNER' ? [{ to: '/venues/mine', label: shell.myVenue, icon: IconBuilding }] : []),
         ...(user.role === 'COACH'
           ? [
-              { to: '/coaches/panel', label: isLanding ? shell.coachPanel : 'Məşqçi panelim', icon: IconAcademy },
-              { to: '/academy/mine', label: isLanding ? shell.courses : 'Kurslarım', icon: IconAcademy },
+              { to: '/coaches/panel', label: shell.coachPanel, icon: IconAcademy },
+              { to: '/academy/mine', label: shell.courses, icon: IconAcademy },
             ]
           : []),
       ]
@@ -137,6 +111,10 @@ export function Layout() {
     }
   }, [user, location.pathname])
 
+  useEffect(() => {
+    document.documentElement.lang = language
+  }, [language])
+
   // İstifadəçi menyusunu kənara klik və Escape ilə bağla
   useEffect(() => {
     if (!menuOpen) return
@@ -165,11 +143,13 @@ export function Layout() {
 
   return (
     <div className="flex min-h-dvh flex-col">
+      <LanguageSwitcher language={language} setLanguage={setLanguage} label={landingText.languageLabel} />
+
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg"
       >
-        {isLanding ? shell.skip : 'Əsas məzmuna keç'}
+        {shell.skip}
       </a>
 
       {/*
@@ -188,7 +168,7 @@ export function Layout() {
         <div className="relative mx-auto flex h-16 max-w-6xl items-center gap-1 px-4">
           <BrandLink to={home.to} />
 
-          <nav aria-label={isLanding ? shell.nav : 'Əsas naviqasiya'} className="ml-6 hidden items-center gap-0.5 lg:flex">
+          <nav aria-label={shell.nav} className="ml-6 hidden items-center gap-0.5 lg:flex">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -215,10 +195,10 @@ export function Layout() {
                 to="/login"
                 className={buttonClass('ghost', 'sm', 'text-felt-100/80 hover:bg-white/10 hover:text-ivory')}
               >
-                {isLanding ? shell.login : 'Daxil ol'}
+                {shell.login}
               </Link>
               <Link to="/register" className={buttonClass('gold', 'sm')}>
-                {isLanding ? shell.register : 'Qeydiyyat'}
+                {shell.register}
               </Link>
             </div>
           )}
@@ -230,7 +210,7 @@ export function Layout() {
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                aria-label={`${user.username} — ${isLanding ? shell.accountMenu : 'hesab menyusu'}`}
+                aria-label={`${user.username} — ${shell.accountMenu}`}
                 className={cx(
                   'flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-colors duration-150 sm:pr-3',
                   menuOpen ? 'bg-white/10' : 'hover:bg-white/6',
@@ -241,7 +221,7 @@ export function Layout() {
                   <span className="block text-[13px] font-semibold text-ivory">{user.username}</span>
                   {/* Reytinq qızıl rənglə — brendbukda "Winner Gold" nəticə rəngidir */}
                   <span className="block text-[11px] font-semibold tabular-nums text-gold-400">
-                    {user.rating} {isLanding ? shell.points : 'xal'}
+                    {user.rating} {shell.points}
                   </span>
                 </span>
                 <IconChevronDown
@@ -265,7 +245,7 @@ export function Layout() {
                       <span className="block truncate text-sm font-semibold text-ink-900">
                         {user.fullName}
                       </span>
-                      <span className="block truncate text-xs text-ink-500">{isLanding ? shell.viewProfile : 'Profilə bax'}</span>
+                      <span className="block truncate text-xs text-ink-500">{shell.viewProfile}</span>
                     </span>
                   </Link>
 
@@ -282,10 +262,10 @@ export function Layout() {
                   {user.role === 'ADMIN' && (
                     <div className="border-t border-rail py-1">
                       <MenuLink to="/admin/gallery" icon={<IconImage size={17} />}>
-                        {isLanding ? shell.galleryAdmin : 'Qalereya idarəetməsi'}
+                        {shell.galleryAdmin}
                       </MenuLink>
                       <MenuLink to="/admin/approvals" icon={<IconUsers size={17} />}>
-                        Təsdiq gözləyənlər
+                        {shell.pendingApprovals}
                       </MenuLink>
                     </div>
                   )}
@@ -298,7 +278,7 @@ export function Layout() {
                       className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-clay-300 transition-colors hover:bg-clay-500/12"
                     >
                       <IconLogout size={17} />
-                      {isLanding ? shell.logout : 'Çıxış'}
+                      {shell.logout}
                     </button>
                   </div>
                 </div>
@@ -319,7 +299,7 @@ export function Layout() {
 
         {/* Orta ölçülü ekranlarda ikinci sıra naviqasiya */}
         <nav
-          aria-label={isLanding ? shell.sections : 'Bölmələr'}
+          aria-label={shell.sections}
           className="no-scrollbar hidden gap-1 overflow-x-auto border-b border-rail bg-cream px-4 py-2 md:flex lg:hidden"
         >
           {navItems.map((item) => (
@@ -351,14 +331,14 @@ export function Layout() {
           <p className="font-display text-[13px] font-semibold tracking-[0.02em] text-ink-700">
             Eloabf
           </p>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-gold-400/70">{isLanding ? landingText.slogan : SLOGAN}</p>
-          <p className="text-xs text-ink-400">{isLanding ? shell.footer : 'Bilyard reytinq və turnir platforması'}</p>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-gold-400/70">{landingText.slogan}</p>
+          <p className="text-xs text-ink-400">{shell.footer}</p>
         </div>
       </footer>
 
       {/* Mobil alt naviqasiya */}
       <nav
-        aria-label={isLanding ? shell.nav : 'Əsas naviqasiya'}
+        aria-label={shell.nav}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-rail bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       >
         {/* Sütun sayı dəyişkəndir: qonaqda və üzvdə fərqli sayda bölmə görünür */}

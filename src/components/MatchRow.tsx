@@ -4,6 +4,8 @@ import { Badge, cx } from './ui'
 import { IconArrowDown, IconArrowUp, IconPin } from './icons'
 import { signed, timeAgo } from '../utils/format'
 import { GAME_TYPE_SHORT } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { Match } from '../api/types'
 
 interface Props {
@@ -26,6 +28,8 @@ const accent: Record<Outcome, string> = {
  * Sol kənardakı rəngli zolaq nəticəni bir baxışda oxunaqlı edir.
  */
 export function MatchRow({ match, viewerId, showVenue = true }: Props) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].matchRow
   const iAmReporter = match.reporter.id === viewerId
   const me = iAmReporter ? match.reporter : match.opponent
   const other = iAmReporter ? match.opponent : match.reporter
@@ -63,7 +67,7 @@ export function MatchRow({ match, viewerId, showVenue = true }: Props) {
           <span className="truncate">@{other.username}</span>
           <span aria-hidden>·</span>
           {/* Reytinq yalnız bu intizama tətbiq olunub — hansı olduğu görünməlidir */}
-          <span className="text-ink-500">{GAME_TYPE_SHORT[match.gameType]}</span>
+          <span className="text-ink-500">{GAME_TYPE_SHORT[language][match.gameType]}</span>
           <span aria-hidden>·</span>
           <span>{timeAgo(match.confirmedAt ?? match.createdAt)}</span>
           {showVenue && match.venue && (
@@ -97,9 +101,9 @@ export function MatchRow({ match, viewerId, showVenue = true }: Props) {
             <RatingDelta value={myChange} />
           ) : null
         ) : match.status === 'PENDING' ? (
-          <Badge tone="yellow">Gözləyir</Badge>
+          <Badge tone="yellow">{copy.pending}</Badge>
         ) : (
-          <Badge tone="neutral">Rədd edilib</Badge>
+          <Badge tone="neutral">{copy.declined}</Badge>
         )}
       </div>
     </div>
@@ -108,6 +112,8 @@ export function MatchRow({ match, viewerId, showVenue = true }: Props) {
 
 /** Reytinq dəyişikliyi — ox + rəqəm */
 export function RatingDelta({ value, className = '' }: { value: number; className?: string }) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].matchRow
   const up = value >= 0
   return (
     <span
@@ -117,7 +123,7 @@ export function RatingDelta({ value, className = '' }: { value: number; classNam
         up ? 'bg-felt-500/12 text-felt-300' : 'bg-clay-500/12 text-clay-300',
         className,
       )}
-      title={`Reytinq dəyişikliyi: ${signed(value)}`}
+      title={copy.ratingChangeTitle(signed(value))}
     >
       {up ? <IconArrowUp size={12} /> : <IconArrowDown size={12} />}
       {Math.abs(value)}

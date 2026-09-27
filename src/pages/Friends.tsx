@@ -20,12 +20,16 @@ import { useToast } from '../components/Toast'
 import { TierBadge } from '../components/TierBadge'
 import { DEFAULT_GAME_TYPE } from '../constants/gameTypes'
 import { timeAgo } from '../utils/format'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { FriendRequest, PlayerSummary, PlayerWithFriendStatus } from '../api/types'
 
 type Tab = 'friends' | 'requests' | 'discover'
 
 export function Friends() {
   const toast = useToast()
+  const { language } = useLanguage()
+  const copy = appCopy[language].friends
   const [tab, setTab] = useState<Tab>('friends')
 
   const [friends, setFriends] = useState<PlayerSummary[]>([])
@@ -99,7 +103,7 @@ export function Friends() {
     setBusyId(playerId)
     try {
       await FriendApi.send(playerId)
-      toast.success('Dostluq sorğusu göndərildi')
+      toast.success(copy.toastRequestSent)
       setResults((prev) =>
         prev.map((r) => (r.player.id === playerId ? { ...r, friendStatus: 'PENDING_SENT' } : r)),
       )
@@ -114,7 +118,7 @@ export function Friends() {
   }
 
   const removeFriend = (playerId: number) =>
-    act(playerId, () => FriendApi.remove(playerId), 'Dostluq silindi')
+    act(playerId, () => FriendApi.remove(playerId), copy.toastFriendRemoved)
 
   const pendingIncoming = incoming.length
 
@@ -127,19 +131,19 @@ export function Friends() {
   return (
     <div>
       <PageHeader
-        title="Dostlar"
-        subtitle="Dostlarınızı idarə edin, dostlarınızdan yeni oyunçu tapın"
+        title={copy.title}
+        subtitle={copy.subtitle}
       />
 
       <Segmented
         className="mb-5"
-        label="Bölmə"
+        label={copy.sectionLabel}
         value={tab}
         onChange={setTab}
         items={[
-          { value: 'friends', label: 'Dostlarım' },
-          { value: 'requests', label: 'Sorğular', count: pendingIncoming },
-          { value: 'discover', label: 'Yeni tap' },
+          { value: 'friends', label: copy.tabFriends },
+          { value: 'requests', label: copy.tabRequests, count: pendingIncoming },
+          { value: 'discover', label: copy.tabDiscover },
         ]}
       />
 
@@ -151,9 +155,9 @@ export function Friends() {
         friends.length === 0 ? (
           <Empty
             icon={<IconUsers size={20} />}
-            title="Hələ dostunuz yoxdur"
-            hint={'"Yeni tap" bölməsindən axtarıb dostluq sorğusu göndərin.'}
-            action={<Button onClick={() => setTab('discover')} icon={<IconSearch size={16} />}>Yeni tap</Button>}
+            title={copy.emptyFriendsTitle}
+            hint={copy.emptyFriendsHint}
+            action={<Button onClick={() => setTab('discover')} icon={<IconSearch size={16} />}>{copy.tabDiscover}</Button>}
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -172,14 +176,14 @@ export function Friends() {
         incoming.length === 0 && outgoing.length === 0 ? (
           <Empty
             icon={<IconUsers size={20} />}
-            title="Gözləyən sorğu yoxdur"
-            hint="Göndərdiyiniz və sizə gələn dostluq sorğuları burada görünəcək."
+            title={copy.emptyRequestsTitle}
+            hint={copy.emptyRequestsHint}
           />
         ) : (
           <div className="space-y-6">
             {incoming.length > 0 && (
               <section>
-                <h2 className="mb-3 text-sm font-semibold text-ink-700">Gələn sorğular</h2>
+                <h2 className="mb-3 text-sm font-semibold text-ink-700">{copy.incomingRequests}</h2>
                 <div className="space-y-3">
                   {incoming.map((r) => (
                     <ActionCard
@@ -215,18 +219,18 @@ export function Friends() {
                             size="sm"
                             icon={<IconCheck size={15} />}
                             loading={busyId === r.id}
-                            onClick={() => act(r.id, () => FriendApi.accept(r.id), 'Dost əlavə edildi')}
+                            onClick={() => act(r.id, () => FriendApi.accept(r.id), copy.toastFriendAdded)}
                           >
-                            Qəbul et
+                            {copy.accept}
                           </Button>
                           <Button
                             variant="secondary"
                             size="sm"
                             icon={<IconX size={15} />}
                             disabled={busyId === r.id}
-                            onClick={() => act(r.id, () => FriendApi.decline(r.id), 'Sorğu rədd edildi')}
+                            onClick={() => act(r.id, () => FriendApi.decline(r.id), copy.toastRequestDeclined)}
                           >
-                            Rədd et
+                            {copy.reject}
                           </Button>
                         </>
                       }
@@ -238,7 +242,7 @@ export function Friends() {
 
             {outgoing.length > 0 && (
               <section>
-                <h2 className="mb-3 text-sm font-semibold text-ink-700">Göndərilən sorğular</h2>
+                <h2 className="mb-3 text-sm font-semibold text-ink-700">{copy.outgoingRequests}</h2>
                 <div className="space-y-3">
                   {outgoing.map((r) => (
                     <ActionCard
@@ -272,9 +276,9 @@ export function Friends() {
                           variant="ghost"
                           size="sm"
                           disabled={busyId === r.receiver.id}
-                          onClick={() => act(r.receiver.id, () => FriendApi.remove(r.receiver.id), 'Sorğu ləğv edildi')}
+                          onClick={() => act(r.receiver.id, () => FriendApi.remove(r.receiver.id), copy.toastRequestCancelled)}
                         >
-                          Ləğv et
+                          {copy.cancel}
                         </Button>
                       }
                     />
@@ -290,15 +294,15 @@ export function Friends() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ad və ya istifadəçi adı..."
+              placeholder={copy.searchPlaceholder}
               icon={<IconSearch size={16} />}
-              aria-label="Oyunçu axtar"
+              aria-label={copy.searchLabel}
             />
           </div>
 
           {!query.trim() && (
             <p className="mb-4 text-sm text-ink-500">
-              Tövsiyələr — dostlarınızın dostları
+              {copy.suggestionsHint}
             </p>
           )}
 
@@ -307,8 +311,8 @@ export function Friends() {
           ) : discoverList.length === 0 ? (
             <Empty
               icon={<IconUsers size={20} />}
-              title={query ? `"${query}" üzrə oyunçu tapılmadı` : 'Hələ tövsiyə yoxdur'}
-              hint={query ? undefined : 'Dostlarınız çoxaldıqca burada yeni oyunçular görünəcək.'}
+              title={query ? copy.noSearchResults(query) : copy.emptySuggestions}
+              hint={query ? undefined : copy.emptySuggestionsHint}
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -348,6 +352,8 @@ function FriendCard({
   onChallenge: () => void
   onRemove: () => void
 }) {
+  const { language } = useLanguage()
+  const copy = appCopy[language].friends
   return (
     <Card padded={false} interactive className="p-4">
       <div className="flex items-start gap-3">
@@ -372,16 +378,16 @@ function FriendCard({
           <div className="font-display text-lg font-semibold leading-none tabular-nums text-felt-300">
             {player.rating}
           </div>
-          <div className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-400">xal</div>
+          <div className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-400">{copy.points}</div>
         </div>
       </div>
 
       <div className="mt-3.5 flex gap-2">
         <Button variant="secondary" size="sm" block icon={<IconSwords size={15} />} onClick={onChallenge}>
-          Dəvət göndər
+          {copy.sendChallenge}
         </Button>
         <Button variant="ghost" size="sm" disabled={busy} onClick={onRemove}>
-          Sil
+          {copy.remove}
         </Button>
       </div>
     </Card>
@@ -398,6 +404,8 @@ function DiscoverCard({
   onAdd: () => void
 }) {
   const { player, friendStatus } = entry
+  const { language } = useLanguage()
+  const copy = appCopy[language].friends
 
   return (
     <Card padded={false} className="p-4">
@@ -423,26 +431,26 @@ function DiscoverCard({
           <div className="font-display text-lg font-semibold leading-none tabular-nums text-felt-300">
             {player.rating}
           </div>
-          <div className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-400">xal</div>
+          <div className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-400">{copy.points}</div>
         </div>
       </div>
 
       <div className="mt-3.5">
         {friendStatus === 'FRIENDS' ? (
           <Button variant="secondary" size="sm" block disabled>
-            Artıq dostsunuz
+            {copy.alreadyFriends}
           </Button>
         ) : friendStatus === 'PENDING_SENT' ? (
           <Button variant="ghost" size="sm" block disabled>
-            Sorğu göndərilib
+            {copy.requestSent}
           </Button>
         ) : friendStatus === 'PENDING_RECEIVED' ? (
           <Button variant="secondary" size="sm" block disabled>
-            Sizə sorğu göndərib — Sorğular bölməsinə keçin
+            {copy.requestReceived}
           </Button>
         ) : (
           <Button size="sm" block loading={busy} icon={<IconUsers size={15} />} onClick={onAdd}>
-            Dost əlavə et
+            {copy.addFriend}
           </Button>
         )}
       </div>

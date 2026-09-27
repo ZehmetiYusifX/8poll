@@ -34,10 +34,14 @@ import { extractErrorMessage } from '../api/client'
 import type { Challenge, Match } from '../api/types'
 import { timeAgo } from '../utils/format'
 import { DEFAULT_GAME_TYPE, GAME_TYPE_LABEL, GAME_TYPE_SHORT } from '../constants/gameTypes'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 
 export function Dashboard() {
   const { user, refresh } = useAuth()
   const toast = useToast()
+  const { language } = useLanguage()
+  const copy = appCopy[language].dashboard
 
   const [pending, setPending] = useState<Match[]>([])
   const [incoming, setIncoming] = useState<Challenge[]>([])
@@ -105,7 +109,7 @@ export function Dashboard() {
     try {
       if (ok) await MatchApi.confirm(id)
       else await MatchApi.reject(id)
-      toast.success(ok ? 'Nəticə təsdiqləndi, reytinqlər yeniləndi' : 'Nəticə rədd edildi')
+      toast.success(ok ? copy.matchConfirmed : copy.matchRejected)
       await afterAction()
     } catch (e) {
       toast.error(extractErrorMessage(e))
@@ -119,7 +123,7 @@ export function Dashboard() {
     try {
       if (ok) await ChallengeApi.accept(id)
       else await ChallengeApi.decline(id)
-      toast.success(ok ? 'Dəvət qəbul edildi' : 'Dəvətdən imtina edildi')
+      toast.success(ok ? copy.challengeAccepted : copy.challengeDeclined)
       await load()
     } catch (e) {
       toast.error(extractErrorMessage(e))
@@ -160,7 +164,7 @@ export function Dashboard() {
           <div className="relative flex items-center gap-4">
             <Avatar name={user.fullName} color={user.avatarColor} src={user.avatarUrl} size={60} ring="gold" />
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.12em] text-felt-200/70">Xoş gəldiniz</p>
+              <p className="text-xs uppercase tracking-[0.12em] text-felt-200/70">{copy.welcome}</p>
               <h1 className="truncate font-display text-2xl font-semibold leading-tight">
                 {user.fullName}
               </h1>
@@ -172,12 +176,12 @@ export function Dashboard() {
                   rank && (
                     <span
                       className="inline-flex items-center gap-1 rounded-full bg-gold-400/20 px-2 py-0.5 font-semibold text-gold-200"
-                      title={`${GAME_TYPE_LABEL[DEFAULT_GAME_TYPE]} reytinq cədvəlindəki yeriniz`}
+                      title={copy.rankTitle(GAME_TYPE_LABEL[language][DEFAULT_GAME_TYPE])}
                     >
                       <IconTrophy size={11} />
-                      {rank.place}. yer / {rank.total}
+                      {copy.place(rank.place, rank.total)}
                       <span className="font-normal text-gold-200/70">
-                        · {GAME_TYPE_SHORT[DEFAULT_GAME_TYPE]}
+                        · {GAME_TYPE_SHORT[language][DEFAULT_GAME_TYPE]}
                       </span>
                     </span>
                   )
@@ -189,13 +193,13 @@ export function Dashboard() {
           <div className="relative flex items-end gap-5">
             <div>
               <div className="text-[11px] uppercase tracking-[0.1em] text-felt-200/70">
-                Ən yaxşı reytinq
+                {copy.bestRating}
               </div>
               <div className="font-display text-4xl font-bold leading-none tabular-nums text-gold-400">
                 {user.rating}
               </div>
               {form.length > 0 && (
-                <div className="mt-2 flex gap-1" title="Son nəticələr (köhnədən yeniyə)">
+                <div className="mt-2 flex gap-1" title={copy.recentForm}>
                   {form.map((r, i) => (
                     <span
                       key={i}
@@ -213,22 +217,22 @@ export function Dashboard() {
         </div>
 
         <dl className="grid grid-cols-4 divide-x divide-rail border-b border-rail bg-card">
-          <HeroStat label="Oyun" value={user.gamesPlayed} />
-          <HeroStat label="Qələbə" value={user.wins} tone="win" />
-          <HeroStat label="Məğlub" value={user.losses} tone="loss" />
-          <HeroStat label="Qazanma" value={`${user.winRate}%`} />
+          <HeroStat label={copy.games} value={user.gamesPlayed} />
+          <HeroStat label={copy.wins} value={user.wins} tone="win" />
+          <HeroStat label={copy.losses} value={user.losses} tone="loss" />
+          <HeroStat label={copy.winRate} value={`${user.winRate}%`} />
         </dl>
 
         <div className="flex flex-wrap gap-2 bg-cream px-5 py-3">
           <Button icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
-            Nəticə daxil et
+            {copy.reportResult}
           </Button>
           <Link to="/friends" className={buttonClass('secondary', 'md')}>
             <IconUsers size={16} />
-            Rəqib tap
+            {copy.findOpponent}
           </Link>
           <Link to="/leaderboard" className={buttonClass('ghost', 'md', 'ml-auto')}>
-            Reytinq cədvəli
+            {copy.leaderboard}
             <IconArrowRight size={16} />
           </Link>
         </div>
@@ -242,7 +246,7 @@ export function Dashboard() {
       ) : (
         todoCount > 0 && (
           <section>
-            <SectionHeader title="Sizdən gözlənilir" count={todoCount} />
+            <SectionHeader title={copy.expectingFromYou} count={todoCount} />
             <div className="space-y-3">
               {pending.map((m) => (
                 <ActionCard
@@ -254,7 +258,7 @@ export function Dashboard() {
                   }
                   title={
                     <>
-                      <b className="font-semibold">{m.reporter.fullName}</b> nəticə daxil etdi
+                      <b className="font-semibold">{m.reporter.fullName}</b> {copy.reportedResultSuffix}
                     </>
                   }
                   meta={
@@ -284,7 +288,7 @@ export function Dashboard() {
                         loading={busyId === m.id}
                         onClick={() => confirmMatch(m.id, true)}
                       >
-                        Təsdiqlə
+                        {copy.confirm}
                       </Button>
                       <Button
                         variant="secondary"
@@ -293,7 +297,7 @@ export function Dashboard() {
                         disabled={busyId === m.id}
                         onClick={() => confirmMatch(m.id, false)}
                       >
-                        Rədd et
+                        {copy.reject}
                       </Button>
                     </>
                   }
@@ -310,7 +314,7 @@ export function Dashboard() {
                   }
                   title={
                     <>
-                      <b className="font-semibold">{c.challenger.fullName}</b> sizi oyuna dəvət etdi
+                      <b className="font-semibold">{c.challenger.fullName}</b> {copy.invitedYouSuffix}
                     </>
                   }
                   meta={
@@ -339,7 +343,7 @@ export function Dashboard() {
                         loading={busyId === c.id}
                         onClick={() => respondChallenge(c.id, true)}
                       >
-                        Qəbul et
+                        {copy.accept}
                       </Button>
                       <Button
                         variant="secondary"
@@ -347,7 +351,7 @@ export function Dashboard() {
                         disabled={busyId === c.id}
                         onClick={() => respondChallenge(c.id, false)}
                       >
-                        İmtina
+                        {copy.decline}
                       </Button>
                     </>
                   }
@@ -361,14 +365,14 @@ export function Dashboard() {
       {/* ── Son maçlar ───────────────────────────────────────── */}
       <section>
         <SectionHeader
-          title="Son maçlarınız"
+          title={copy.recentMatches}
           action={
             recent.length > 0 && (
               <Link
                 to="/matches"
                 className="inline-flex items-center gap-1 text-sm font-medium text-felt-300 underline-offset-4 hover:underline"
               >
-                Hamısı
+                {copy.all}
                 <IconArrowRight size={15} />
               </Link>
             )
@@ -379,11 +383,11 @@ export function Dashboard() {
         ) : recent.length === 0 ? (
           <Empty
             icon={<IconTable size={20} />}
-            title="Hələ təsdiqlənmiş maçınız yoxdur"
-            hint="İlk nəticənizi daxil edin — rəqibiniz təsdiqlədikdən sonra Elo reytinqiniz hesablanacaq."
+            title={copy.emptyTitle}
+            hint={copy.emptyHint}
             action={
               <Button icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
-                Nəticə daxil et
+                {copy.reportResult}
               </Button>
             }
           />

@@ -8,6 +8,8 @@ import { IconAcademy, IconPlus, IconSearch } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import { GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
 import { COACHING_LEVELS, FORMAT_LABEL, LESSON_FORMATS, LEVEL_LABEL } from '../constants/academy'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { CoachingLevel, GameType, LessonFormat, LessonPackage } from '../api/types'
 
 const ALL = 'ALL'
@@ -15,6 +17,8 @@ const ALL = 'ALL'
 /** Dərs paketlərinin vitrini — qonağa da açıqdır */
 export function Academy() {
   const { user } = useAuth()
+  const { language } = useLanguage()
+  const copy = appCopy[language].academyPage
   const [packages, setPackages] = useState<LessonPackage[]>([])
   const [query, setQuery] = useState('')
   const [gameType, setGameType] = useState<GameType | typeof ALL>(ALL)
@@ -51,19 +55,19 @@ export function Academy() {
   return (
     <div>
       <PageHeader
-        eyebrow="Akademiya"
-        title="Dərs paketləri"
-        subtitle="Məşqçidən dərs alın — texnikanı öyrənin, reytinqi masada qazanın"
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        subtitle={copy.subtitle}
         actions={
           user?.role === 'COACH' ? (
             <Link to="/coaches/panel">
               <Button variant="secondary" icon={<IconPlus size={16} />}>
-                Paket əlavə et
+                {copy.addPackage}
               </Button>
             </Link>
           ) : (
             <Link to="/coaches/register">
-              <Button variant="secondary">Məşqçi hesabı aç</Button>
+              <Button variant="secondary">{copy.becomeCoach}</Button>
             </Link>
           )
         }
@@ -75,43 +79,43 @@ export function Academy() {
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Paket və ya məşqçi axtar..."
+          placeholder={copy.searchPlaceholder}
           icon={<IconSearch size={16} />}
-          aria-label="Paket axtar"
+          aria-label={copy.searchLabel}
         />
         <Select
           value={gameType}
           onChange={(e) => setGameType(e.target.value as GameType | typeof ALL)}
-          aria-label="İntizam"
+          aria-label={copy.disciplineLabel}
         >
-          <option value={ALL}>Bütün intizamlar</option>
+          <option value={ALL}>{copy.allDisciplines}</option>
           {GAME_TYPES.map((g) => (
             <option key={g} value={g}>
-              {GAME_TYPE_LABEL[g]}
+              {GAME_TYPE_LABEL[language][g]}
             </option>
           ))}
         </Select>
         <Select
           value={level}
           onChange={(e) => setLevel(e.target.value as CoachingLevel | typeof ALL)}
-          aria-label="Səviyyə"
+          aria-label={copy.levelLabel}
         >
-          <option value={ALL}>Bütün səviyyələr</option>
+          <option value={ALL}>{copy.allLevels}</option>
           {COACHING_LEVELS.map((l) => (
             <option key={l} value={l}>
-              {LEVEL_LABEL[l]}
+              {LEVEL_LABEL[language][l]}
             </option>
           ))}
         </Select>
         <Select
           value={format}
           onChange={(e) => setFormat(e.target.value as LessonFormat | typeof ALL)}
-          aria-label="Format"
+          aria-label={copy.formatLabel}
         >
-          <option value={ALL}>Fərdi və qrup</option>
+          <option value={ALL}>{copy.allFormats}</option>
           {LESSON_FORMATS.map((f) => (
             <option key={f} value={f}>
-              {FORMAT_LABEL[f]}
+              {FORMAT_LABEL[language][f]}
             </option>
           ))}
         </Select>
@@ -124,16 +128,12 @@ export function Academy() {
       ) : filtered.length === 0 ? (
         <Empty
           icon={<IconAcademy size={20} />}
-          title={hasFilter ? 'Uyğun paket tapılmadı' : 'Hələ dərs paketi yoxdur'}
-          hint={
-            hasFilter
-              ? 'Filtrləri dəyişib yenidən yoxlayın.'
-              : 'İlk paketi siz yerləşdirin — məşqçi hesabı açmaq bir neçə dəqiqə çəkir.'
-          }
+          title={hasFilter ? copy.emptyFiltered : copy.emptyNone}
+          hint={hasFilter ? copy.emptyFilteredHint : copy.emptyNoneHint}
           action={
             !hasFilter ? (
               <Link to="/coaches/register">
-                <Button icon={<IconPlus size={16} />}>Məşqçi hesabı aç</Button>
+                <Button icon={<IconPlus size={16} />}>{copy.becomeCoach}</Button>
               </Link>
             ) : undefined
           }

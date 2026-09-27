@@ -19,6 +19,8 @@ import { IconCheck, IconPin, IconPlus, IconTable, IconX } from '../components/ic
 import { useToast } from '../components/Toast'
 import { extractErrorMessage } from '../api/client'
 import { timeAgo } from '../utils/format'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import type { Match } from '../api/types'
 
 type Filter = 'all' | 'wins' | 'losses' | 'open'
@@ -26,6 +28,8 @@ type Filter = 'all' | 'wins' | 'losses' | 'open'
 export function Matches() {
   const { user, refresh } = useAuth()
   const toast = useToast()
+  const { language } = useLanguage()
+  const copy = appCopy[language].matches
 
   const [mine, setMine] = useState<Match[]>([])
   const [pending, setPending] = useState<Match[]>([])
@@ -57,7 +61,7 @@ export function Matches() {
     try {
       if (ok) await MatchApi.confirm(id)
       else await MatchApi.reject(id)
-      toast.success(ok ? 'Nəticə təsdiqləndi' : 'Nəticə rədd edildi')
+      toast.success(ok ? copy.confirmed : copy.rejected)
       await Promise.all([load(), refresh()])
     } catch (e) {
       toast.error(extractErrorMessage(e))
@@ -99,11 +103,11 @@ export function Matches() {
   return (
     <div>
       <PageHeader
-        title="Maçlarım"
-        subtitle="Nəticələr, təsdiqlər və reytinq dəyişiklikləri"
+        title={copy.title}
+        subtitle={copy.subtitle}
         actions={
           <Button icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
-            Nəticə daxil et
+            {copy.reportResult}
           </Button>
         }
       />
@@ -117,7 +121,7 @@ export function Matches() {
           {/* ── Təsdiq gözləyənlər ──────────────────────────── */}
           {pending.length > 0 && (
             <section>
-              <SectionHeader title="Təsdiqinizi gözləyir" count={pending.length} />
+              <SectionHeader title={copy.awaitingConfirmation} count={pending.length} />
               <div className="space-y-3">
                 {pending.map((m) => (
                   <ActionCard
@@ -129,7 +133,7 @@ export function Matches() {
                     }
                     title={
                       <>
-                        <b className="font-semibold">{m.reporter.fullName}</b> nəticə daxil etdi
+                        <b className="font-semibold">{m.reporter.fullName}</b> {copy.reportedResultSuffix}
                       </>
                     }
                     meta={
@@ -159,7 +163,7 @@ export function Matches() {
                           loading={busyId === m.id}
                           onClick={() => confirmMatch(m.id, true)}
                         >
-                          Təsdiqlə
+                          {copy.confirm}
                         </Button>
                         <Button
                           variant="secondary"
@@ -168,7 +172,7 @@ export function Matches() {
                           disabled={busyId === m.id}
                           onClick={() => confirmMatch(m.id, false)}
                         >
-                          Rədd et
+                          {copy.reject}
                         </Button>
                       </>
                     }
@@ -182,10 +186,10 @@ export function Matches() {
           {mine.length > 0 && (
             <Card padded={false}>
               <dl className="grid grid-cols-3 divide-x divide-rail">
-                <SummaryCell label="Qələbə" value={summary.wins} className="text-felt-300" />
-                <SummaryCell label="Məğlubiyyət" value={summary.losses} className="text-clay-300" />
+                <SummaryCell label={copy.wins} value={summary.wins} className="text-felt-300" />
+                <SummaryCell label={copy.losses} value={summary.losses} className="text-clay-300" />
                 <SummaryCell
-                  label="Ümumi reytinq"
+                  label={copy.totalRating}
                   value={`${summary.delta > 0 ? '+' : ''}${summary.delta}`}
                   className={summary.delta >= 0 ? 'text-felt-300' : 'text-clay-300'}
                 />
@@ -196,18 +200,18 @@ export function Matches() {
           {/* ── Tarixçə ────────────────────────────────────── */}
           <section>
             <SectionHeader
-              title="Tarixçə"
+              title={copy.history}
               action={
                 mine.length > 0 && (
                   <Segmented
                     value={filter}
                     onChange={setFilter}
-                    label="Maç filtri"
+                    label={copy.matchFilterLabel}
                     items={[
-                      { value: 'all', label: 'Hamısı' },
-                      { value: 'wins', label: 'Qələbə' },
-                      { value: 'losses', label: 'Məğlub' },
-                      { value: 'open', label: 'Açıq', count: openCount },
+                      { value: 'all', label: copy.filterAll },
+                      { value: 'wins', label: copy.filterWins },
+                      { value: 'losses', label: copy.filterLosses },
+                      { value: 'open', label: copy.filterOpen, count: openCount },
                     ]}
                   />
                 )
@@ -217,16 +221,12 @@ export function Matches() {
             {visible.length === 0 ? (
               <Empty
                 icon={<IconTable size={20} />}
-                title={mine.length === 0 ? 'Hələ maçınız yoxdur' : 'Bu filtrə uyğun maç yoxdur'}
-                hint={
-                  mine.length === 0
-                    ? 'Rəqib seçin, oynayın və nəticəni buradan qeyd edin.'
-                    : undefined
-                }
+                title={mine.length === 0 ? copy.emptyNone : copy.emptyFiltered}
+                hint={mine.length === 0 ? copy.emptyHint : undefined}
                 action={
                   mine.length === 0 ? (
                     <Button icon={<IconPlus size={16} />} onClick={() => setReport(true)}>
-                      Nəticə daxil et
+                      {copy.reportResult}
                     </Button>
                   ) : undefined
                 }

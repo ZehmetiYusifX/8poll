@@ -7,6 +7,8 @@ import { Alert, Card, Empty, Input, ListSkeleton, PageHeader, Segmented, cx } fr
 import { IconSearch, IconTrophy, IconUsers } from '../components/icons'
 import { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
+import { appCopy } from '../i18n/app'
 import {
   DEFAULT_GAME_TYPE,
   GAME_TYPES,
@@ -21,14 +23,16 @@ import type { GameType, LeaderboardEntry } from '../api/types'
  * İlk üç yer üçün medal rəngləri. Tünd səthdə metal parıltısı açıq mətnlə
  * verilir: fon metalın çox zəif çaları, mətn və halqa isə metalın özü.
  */
-const MEDAL: Record<number, { ring: string; text: string; bg: string; label: string }> = {
-  1: { ring: 'ring-[#d7b56d]', text: 'text-[#e8cd8a]', bg: 'bg-[#d7b56d]/12', label: 'Qızıl' },
-  2: { ring: 'ring-[#9aa3a8]', text: 'text-[#cfd6da]', bg: 'bg-[#9aa3a8]/12', label: 'Gümüş' },
-  3: { ring: 'ring-[#b0703d]', text: 'text-[#d9a074]', bg: 'bg-[#b0703d]/14', label: 'Bronz' },
+const MEDAL_STYLE: Record<number, { ring: string; text: string; bg: string }> = {
+  1: { ring: 'ring-[#d7b56d]', text: 'text-[#e8cd8a]', bg: 'bg-[#d7b56d]/12' },
+  2: { ring: 'ring-[#9aa3a8]', text: 'text-[#cfd6da]', bg: 'bg-[#9aa3a8]/12' },
+  3: { ring: 'ring-[#b0703d]', text: 'text-[#d9a074]', bg: 'bg-[#b0703d]/14' },
 }
 
 export function Leaderboard() {
   const { user } = useAuth()
+  const { language } = useLanguage()
+  const copy = appCopy[language].leaderboard
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [gameType, setGameType] = useState<GameType>(DEFAULT_GAME_TYPE)
   const [league, setLeague] = useState<LeagueFilter>('ALL')
@@ -75,13 +79,13 @@ export function Leaderboard() {
   return (
     <div>
       <PageHeader
-        eyebrow="Elo reytinqi"
-        title="Reytinq cədvəli"
-        subtitle={`${GAME_TYPE_LABEL[gameType]} üzrə təsdiqlənmiş maçlar əsasında hesablanan sıralama`}
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        subtitle={copy.subtitle(GAME_TYPE_LABEL[language][gameType])}
         actions={
           myEntry && (
             <div className="flex items-center gap-2.5 rounded-lg border border-rail bg-card px-3.5 py-2 shadow-xs">
-              <span className="text-xs text-ink-500">Sizin yeriniz</span>
+              <span className="text-xs text-ink-500">{copy.yourPlace}</span>
               <span className="font-display text-lg font-semibold tabular-nums text-felt-300">
                 {myEntry.rank}.
               </span>
@@ -95,18 +99,18 @@ export function Leaderboard() {
           tabdan geri qayıda bilməz. */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Segmented
-          label="Oyun növü"
+          label={copy.gameTypeLabel}
           value={gameType}
           onChange={setGameType}
-          items={GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_SHORT[t] }))}
+          items={GAME_TYPES.map((t) => ({ value: t, label: GAME_TYPE_SHORT[language][t] }))}
         />
         <Segmented
-          label="Liqa"
+          label={copy.leagueLabel}
           value={league}
           onChange={setLeague}
           items={(['ALL', 'AMATEUR', 'PROFESSIONAL'] as LeagueFilter[]).map((l) => ({
             value: l,
-            label: LEAGUE_FILTER_LABEL[l],
+            label: LEAGUE_FILTER_LABEL[language][l],
           }))}
         />
       </div>
@@ -120,10 +124,10 @@ export function Leaderboard() {
           icon={<IconTrophy size={20} />}
           title={
             league === 'ALL'
-              ? `${GAME_TYPE_LABEL[gameType]} üzrə cədvəl hələ boşdur`
-              : `${GAME_TYPE_LABEL[gameType]} üzrə ${LEAGUE_FILTER_LABEL[league].toLowerCase()} liqada oyunçu yoxdur`
+              ? copy.emptyAll(GAME_TYPE_LABEL[language][gameType])
+              : copy.emptyLeague(GAME_TYPE_LABEL[language][gameType], LEAGUE_FILTER_LABEL[language][league].toLowerCase())
           }
-          hint="İlk təsdiqlənmiş maçdan sonra sıralama formalaşacaq."
+          hint={copy.emptyHint}
         />
       ) : (
         <>
@@ -131,29 +135,30 @@ export function Leaderboard() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Oyunçu axtar..."
+              placeholder={copy.searchPlaceholder}
               icon={<IconSearch size={16} />}
-              aria-label="Oyunçu axtar"
+              aria-label={copy.searchLabel}
             />
           </div>
 
           {filtered.length === 0 ? (
-            <Empty icon={<IconUsers size={20} />} title={`"${query}" üzrə oyunçu tapılmadı`} />
+            <Empty icon={<IconUsers size={20} />} title={copy.noSearchResults(query)} />
           ) : (
             <Card padded={false} className="overflow-hidden">
               {/* Sütun başlıqları — yalnız geniş ekranlarda */}
               <div className="hidden items-center gap-4 border-b border-rail bg-cream px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400 sm:flex">
-                <span className="w-9 text-center">Yer</span>
-                <span className="flex-1">Oyunçu</span>
-                <span className="w-28 text-center">Q / M</span>
-                <span className="w-16 text-center">Oyun</span>
-                <span className="w-20 text-right">Reytinq</span>
+                <span className="w-9 text-center">{copy.colRank}</span>
+                <span className="flex-1">{copy.colPlayer}</span>
+                <span className="w-28 text-center">{copy.colWL}</span>
+                <span className="w-16 text-center">{copy.colGames}</span>
+                <span className="w-20 text-right">{copy.colRating}</span>
               </div>
 
               <ul className="divide-y divide-rail">
                 {filtered.map(({ rank, player }) => {
                   const isMe = player.id === user?.id
-                  const medal = MEDAL[rank]
+                  const medalStyle = MEDAL_STYLE[rank]
+                  const medalLabel = copy.medal[rank]
                   return (
                     <li key={player.id}>
                       <Link
@@ -166,11 +171,11 @@ export function Leaderboard() {
                         <span
                           className={cx(
                             'flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold tabular-nums',
-                            medal
-                              ? `${medal.bg} ${medal.text} ring-2 ${medal.ring}`
+                            medalStyle
+                              ? `${medalStyle.bg} ${medalStyle.text} ring-2 ${medalStyle.ring}`
                               : 'bg-gold-400/8 text-ink-500',
                           )}
-                          title={medal?.label}
+                          title={medalLabel}
                         >
                           {rank}
                         </span>
@@ -185,7 +190,7 @@ export function Leaderboard() {
                             <TierBadge tier={player.tier} className="shrink-0" />
                             {isMe && (
                               <span className="shrink-0 rounded-full bg-felt-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ivory">
-                                Siz
+                                {copy.you}
                               </span>
                             )}
                           </span>
@@ -193,7 +198,7 @@ export function Leaderboard() {
                             @{player.username}
                             <span className="sm:hidden">
                               {' · '}
-                              {player.wins}Q / {player.losses}M · {player.gamesPlayed} oyun
+                              {copy.wlShort(player.wins, player.losses)} · {copy.gamesShort(player.gamesPlayed)}
                             </span>
                           </span>
                         </span>
@@ -212,7 +217,7 @@ export function Leaderboard() {
                           <span className="font-display text-lg font-semibold tabular-nums text-ink-900">
                             {player.rating}
                           </span>
-                          <span className="ml-1 text-[11px] text-ink-400">xal</span>
+                          <span className="ml-1 text-[11px] text-ink-400">{copy.points}</span>
                         </span>
                       </Link>
                     </li>

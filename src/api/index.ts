@@ -102,6 +102,8 @@ export const ChallengeApi = {
     api.post<Challenge>('/challenges', body).then((r) => r.data),
   incoming: () => api.get<Challenge[]>('/challenges/incoming').then((r) => r.data),
   outgoing: () => api.get<Challenge[]>('/challenges/outgoing').then((r) => r.data),
+  /** Qəbul edilmiş, hələ nəticəsi yazılmamış dəvətlər — nəticə girişi yalnız bunlar üzrədir */
+  playable: () => api.get<Challenge[]>('/challenges/playable').then((r) => r.data),
   accept: (id: number) => api.post<Challenge>(`/challenges/${id}/accept`).then((r) => r.data),
   decline: (id: number) => api.post<Challenge>(`/challenges/${id}/decline`).then((r) => r.data),
   cancel: (id: number) => api.post<Challenge>(`/challenges/${id}/cancel`).then((r) => r.data),
