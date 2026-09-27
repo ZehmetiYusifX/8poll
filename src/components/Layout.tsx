@@ -156,7 +156,7 @@ export function Layout() {
         Başlıq klub zalının tavanı kimi işləyir: mahud yaşılı səth və
         yuxarıdan düşən zəif spot işığı. Altındakı qızıl xətt masanın railıdır.
       */}
-      <header className="felt-weave sticky top-0 z-40 bg-felt-950 shadow-lg">
+      <header className="felt-weave sticky top-0 z-40 bg-felt-950 pt-[env(safe-area-inset-top)] shadow-lg">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
