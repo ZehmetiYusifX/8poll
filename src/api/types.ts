@@ -44,6 +44,38 @@ export type TournamentStatus = 'REGISTRATION' | 'ONGOING' | 'COMPLETED' | 'CANCE
 
 export type BracketMatchStatus = 'PENDING' | 'READY' | 'COMPLETED'
 
+/** Hansı şəbəkəyə aiddir — tək çıxmada hamısı UPPER olur */
+export type BracketType = 'UPPER' | 'LOWER' | 'GRAND_FINAL' | 'GROUP' | 'PLAYOFF'
+
+/**
+ * İntizamın alt növü. Reytinqə təsir etmir — Elo valideyn `GameType`
+ * üzrə hesablanır, alt növ yalnız turnirin meta məlumatıdır.
+ */
+export type Discipline =
+  | 'POOL_8_BALL'
+  | 'POOL_9_BALL'
+  | 'POOL_10_BALL'
+  | 'POOL_14_1'
+  | 'PYRAMID_FREE'
+  | 'PYRAMID_COMBINED'
+  | 'PYRAMID_DYNAMIC'
+  | 'PYRAMID_CLASSIC'
+  | 'PYRAMID_MOSCOW'
+  | 'SNOOKER_15_RED'
+  | 'SNOOKER_10_RED'
+  | 'SNOOKER_6_RED'
+
+export type TournamentFormat = 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'GROUP_PLAYOFF'
+
+export type TournamentCategory =
+  | 'CLUB'
+  | 'COMMERCIAL'
+  | 'REGIONAL'
+  | 'NATIONAL'
+  | 'INTERNATIONAL'
+
+export type ParticipantGender = 'ANY' | 'MALE' | 'FEMALE'
+
 /**
  * rating/gamesPlayed/... sahələri bütün intizamların aqreqatıdır:
  * rating = ən yaxşı intizamın reytinqi, qalanları cəmdir.
@@ -197,9 +229,24 @@ export interface Tournament {
   owner: PlayerSummary
   gameType: GameType
   gameTypeLabel: string
+  discipline: Discipline
+  disciplineLabel: string
+  format: TournamentFormat
+  formatLabel: string
+  category: TournamentCategory
+  categoryLabel: string
+  participantGender: ParticipantGender
+  /** Neçə qələbəyə qədər oynanılır */
+  raceTo: number
   startAt: string | null
+  endAt: string | null
+  registrationDeadline: string | null
   maxParticipants: number
   participantCount: number
+  /** Yalnız GROUP_PLAYOFF üçün mənalıdır */
+  groupCount: number
+  advancePerGroup: number
+  hidden: boolean
   status: TournamentStatus
   winner: PlayerSummary | null
   createdAt: string
@@ -207,6 +254,9 @@ export interface Tournament {
 
 export interface BracketMatch {
   id: number
+  bracketType: BracketType
+  /** GROUP maçları üçün qrup nömrəsi (0-dan), digər hallarda null */
+  groupIndex: number | null
   round: number
   position: number
   player1: PlayerSummary | null
@@ -218,19 +268,47 @@ export interface BracketMatch {
   nextMatchId: number | null
 }
 
+/** Qrup mərhələsində bir oyunçunun cədvəl sətri */
+export interface GroupStanding {
+  groupIndex: number
+  rank: number
+  player: PlayerSummary
+  played: number
+  won: number
+  lost: number
+  gamesFor: number
+  gamesAgainst: number
+  gameDiff: number
+  /** Bu yerlə pley-offa keçir */
+  advancing: boolean
+}
+
 export interface TournamentDetail {
   tournament: Tournament
   participants: PlayerSummary[]
   bracket: BracketMatch[]
+  /** Yalnız GROUP_PLAYOFF turnirlərində dolu olur */
+  groupStandings: GroupStanding[]
 }
 
 export interface CreateTournamentRequest {
   name: string
   venueId: number
   gameType: GameType
+  /** Boş buraxılarsa serverdə intizamın standart alt növü götürülür */
+  discipline?: Discipline
+  format?: TournamentFormat
+  category?: TournamentCategory
+  participantGender?: ParticipantGender
   description?: string
   startAt?: string | null
+  endAt?: string | null
+  registrationDeadline?: string | null
   maxParticipants?: number
+  raceTo?: number
+  groupCount?: number
+  advancePerGroup?: number
+  hidden?: boolean
 }
 
 export interface ReportResultRequest {

@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { Badge, Card, cx } from './ui'
 import type { BadgeTone } from './ui'
-import { IconCalendar, IconPin, IconTable, IconTrophy, IconUsers } from './icons'
-import { GAME_TYPE_LABEL } from '../constants/gameTypes'
+import { IconCalendar, IconPin, IconSwords, IconTable, IconTrophy, IconUsers } from './icons'
+import { DISCIPLINE_LABEL, FORMAT_LABEL } from '../constants/tournament'
 import type { Tournament, TournamentStatus } from '../api/types'
 import type { Language } from '../context/LanguageContext'
 import { useLanguage } from '../context/LanguageContext'
-import { localeByLanguage } from '../i18n/landing'
+import { shortDate, timeUntil } from '../i18n/time'
 
 const STATUS_BAR: Record<TournamentStatus, string> = {
   REGISTRATION: 'bg-felt-500',
@@ -63,7 +63,7 @@ export function TournamentCard({
   const labels = localizedText[lang]
   const st = statusMeta[lang][t.status]
   const fillPct = Math.min(100, Math.round((t.participantCount / t.maxParticipants) * 100))
-  const soon = t.status === 'REGISTRATION' ? localizedTimeUntil(t.startAt, lang) : null
+  const soon = t.status === 'REGISTRATION' ? timeUntil(t.startAt, lang) : null
 
   return (
     <Link to={`/tournaments/${t.id}`} className="group block h-full">
@@ -80,10 +80,15 @@ export function TournamentCard({
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500">
-          {/* Turnirin intizamı — seed sıralaması bu reytinqə görə qurulur */}
+          {/* Alt növ intizamı da bildirir — seed sıralaması isə valideyn
+              intizamın (t.gameType) reytinqinə görə qurulur */}
           <span className="inline-flex items-center gap-1">
             <IconTable size={13} className="text-ink-400" />
-            {GAME_TYPE_LABEL[lang][t.gameType]}
+            {DISCIPLINE_LABEL[lang][t.discipline]}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <IconSwords size={13} className="text-ink-400" />
+            {FORMAT_LABEL[lang][t.format]}
           </span>
           {!hideVenue && (
             <span className="inline-flex items-center gap-1">
@@ -94,7 +99,7 @@ export function TournamentCard({
           {t.startAt && (
             <span className="inline-flex items-center gap-1">
               <IconCalendar size={13} className="text-ink-400" />
-              {localizedDate(t.startAt, lang)}
+              {shortDate(t.startAt, lang)}
               {soon && <span className="text-felt-300">· {soon}</span>}
             </span>
           )}
@@ -133,26 +138,4 @@ export function TournamentCard({
       </Card>
     </Link>
   )
-}
-
-function localizedDate(iso: string | null, language: Language): string {
-  if (!iso) return '—'
-  return new Intl.DateTimeFormat(localeByLanguage[language], {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(iso))
-}
-
-function localizedTimeUntil(iso: string | null, language: Language): string | null {
-  if (!iso) return null
-  const diff = new Date(iso).getTime() - Date.now()
-  if (diff <= 0) return null
-
-  const formatter = new Intl.RelativeTimeFormat(localeByLanguage[language], { numeric: 'always' })
-  const minutes = Math.max(1, Math.floor(diff / 60_000))
-  if (minutes < 60) return formatter.format(minutes, 'minute')
-  const hours = Math.floor(diff / 3_600_000)
-  if (hours < 24) return formatter.format(hours, 'hour')
-  return formatter.format(Math.floor(hours / 24), 'day')
 }

@@ -6,6 +6,7 @@ import { VenuePhoto } from '../components/VenuePhoto'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { TournamentCard } from '../components/TournamentCard'
+import { CreateTournamentWizard } from '../components/CreateTournamentWizard'
 import {
   Alert,
   Badge,
@@ -17,7 +18,6 @@ import {
   Input,
   PageHeader,
   SectionHeader,
-  Select,
   Skeleton,
   Textarea,
   cx,
@@ -34,9 +34,7 @@ import {
 } from '../components/icons'
 import { useToast } from '../components/Toast'
 import { extractErrorMessage, mediaUrl } from '../api/client'
-import { DEFAULT_GAME_TYPE, GAME_TYPES, GAME_TYPE_LABEL } from '../constants/gameTypes'
-import { useLanguage } from '../context/LanguageContext'
-import type { GameType, Venue, Tournament } from '../api/types'
+import type { Venue, Tournament } from '../api/types'
 
 export function VenueProfile() {
   const { id } = useParams()
@@ -303,7 +301,7 @@ export function VenueProfile() {
       )}
 
       {isOwner && createOpen && (
-        <CreateTournamentModal
+        <CreateTournamentWizard
           venueId={venueId}
           onClose={() => setCreateOpen(false)}
           onCreated={() => {
@@ -481,131 +479,3 @@ function EditVenueModal({
   )
 }
 
-/* ── Turnir yaratma ─────────────────────────────────────────── */
-
-const BRACKET_SIZES = [4, 8, 16, 32]
-
-function CreateTournamentModal({
-  venueId,
-  onClose,
-  onCreated,
-}: {
-  venueId: number
-  onClose: () => void
-  onCreated: () => void
-}) {
-  const { language } = useLanguage()
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    startAt: '',
-    maxParticipants: 8,
-    gameType: DEFAULT_GAME_TYPE as GameType,
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const submit = async () => {
-    if (form.name.trim().length < 2) return setError('Turnir adı daxil edin')
-    setLoading(true)
-    setError('')
-    try {
-      await TournamentApi.create({
-        name: form.name.trim(),
-        venueId,
-        gameType: form.gameType,
-        description: form.description.trim() || undefined,
-        startAt: form.startAt ? new Date(form.startAt).toISOString() : undefined,
-        maxParticipants: form.maxParticipants,
-      })
-      onCreated()
-    } catch (e) {
-      setError(extractErrorMessage(e))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Modal open onClose={onClose} title="Yeni turnir" description="Qeydiyyat açıq olacaq — oyunçular özləri qoşulacaq.">
-      <div className="space-y-4">
-        <Field label="Turnir adı">
-          <Input
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Yay Kuboku"
-            autoFocus
-          />
-        </Field>
-
-        <Field label="Oyun növü" hint="Seed sıralaması bu intizamın reytinqinə görə qurulacaq">
-          <Select
-            value={form.gameType}
-            onChange={(e) => setForm((f) => ({ ...f, gameType: e.target.value as GameType }))}
-          >
-            {GAME_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {GAME_TYPE_LABEL[language][t]}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <Field label="Təsvir" optional>
-          <Textarea
-            rows={2}
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Format, mükafat fondu, qaydalar..."
-          />
-        </Field>
-
-        <Field label="Başlama tarixi" optional>
-          <Input
-            type="datetime-local"
-            value={form.startAt}
-            onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))}
-          />
-        </Field>
-
-        <div>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
-            İştirakçı sayı
-          </p>
-          <div className="grid grid-cols-4 gap-2">
-            {BRACKET_SIZES.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, maxParticipants: n }))}
-                aria-pressed={form.maxParticipants === n}
-                className={cx(
-                  'rounded-lg border py-2 text-sm font-semibold tabular-nums transition-colors',
-                  form.maxParticipants === n
-                    ? 'border-felt-600 bg-felt-500/12 text-felt-300'
-                    : 'border-rail-strong bg-cream text-ink-600 hover:border-gold-400/40',
-                )}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-          <p className="mt-1.5 text-xs text-ink-400">
-            Turniri başlatdıqda cədvəl avtomatik qurulacaq.
-          </p>
-        </div>
-
-        <ErrorText>{error}</ErrorText>
-
-        <div className="flex gap-2 pt-1">
-          <Button variant="secondary" block onClick={onClose} disabled={loading}>
-            Ləğv et
-          </Button>
-          <Button block loading={loading} onClick={submit}>
-            Yarat
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  )
-}

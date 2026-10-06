@@ -12,6 +12,7 @@ import type { LeaderboardEntry, Match, Tournament, TournamentStatus } from '../a
 import { useLanguage } from '../context/LanguageContext'
 import type { Language } from '../context/LanguageContext'
 import { landingCopy, localeByLanguage } from '../i18n/landing'
+import { relativeTime } from '../i18n/time'
 
 /*
  * Təqdimat səhifəsi. Qonaq da, üzv də eyni səhifəni görür — fərq yalnız
@@ -384,12 +385,17 @@ function HeroFacts({
     <div className="relative border-t border-white/10 bg-black/35 backdrop-blur-xl">
       <span aria-hidden className="rule-gold absolute inset-x-0 top-0 h-px opacity-60" />
 
+      {/*
+       * Xanalar sütun kimi qurulur və dəyər `mt-auto` ilə alta basılır:
+       * uzun etiketlər ("Təsdiqlənmiş maç") iki sətrə düşəndə belə bütün
+       * rəqəmlər eyni xətt üzərində qalır.
+       */}
       <dl className="mx-auto grid max-w-6xl grid-cols-2 px-4 sm:grid-cols-4">
         {facts.map((f, i) => (
           <div
             key={f.label}
             className={cx(
-              'min-w-0 py-4 pr-5 sm:pr-6',
+              'flex min-w-0 flex-col py-4 pr-5 sm:pr-6',
               // Mobil şəbəkə iki sütunludur, geniş ekranda dörd
               i === 0 ? 'pl-0' : i === 2 ? 'pl-0 sm:pl-6' : 'pl-5 sm:pl-6',
               i % 2 === 1 && 'border-l border-white/10',
@@ -397,10 +403,10 @@ function HeroFacts({
               i > 0 && 'sm:border-l sm:border-white/10',
             )}
           >
-            <dt className="text-[10px] font-medium uppercase tracking-[0.22em] text-ink-500">
+            <dt className="text-[10px] font-medium uppercase leading-[1.5] tracking-[0.18em] text-ink-500 sm:tracking-[0.22em]">
               {f.label}
             </dt>
-            <dd className="mt-2 truncate font-display text-[15px] font-medium text-ink-900">
+            <dd className="mt-auto truncate pt-2 font-display text-[15px] font-medium text-ink-900">
               {f.value ?? <Skeleton className="h-4 w-16" />}
             </dd>
           </div>
@@ -508,10 +514,13 @@ function RecentMatch({ match: m, language }: { match: Match; language: Language 
   const winScore = reporterWon ? m.reporterScore : m.opponentScore
   const loseScore = reporterWon ? m.opponentScore : m.reporterScore
 
+  // Qalibin qazandığı Elo — səhifənin bütün vədini bir rəqəmlə göstərən yer
+  const gain = reporterWon ? m.reporterRatingChange : m.opponentRatingChange
+
   const meta = [relativeTime(m.confirmedAt ?? m.createdAt, language), m.venue?.name].filter(Boolean).join(' · ')
 
   return (
-    <li className="py-3.5">
+    <li className="group py-3.5 transition-colors hover:bg-white/[0.02]">
       <div className="flex items-center gap-3 sm:gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <Avatar name={winner.fullName} color={winner.avatarColor} src={winner.avatarUrl} size={30} ring="gold" />
@@ -523,10 +532,21 @@ function RecentMatch({ match: m, language }: { match: Match; language: Language 
           </Link>
         </div>
 
-        <div className="shrink-0 font-display text-[15px] font-semibold tabular-nums">
-          <span className="text-gold-400">{winScore}</span>
-          <span className="mx-1.5 text-ink-300">:</span>
-          <span className="text-ink-500">{loseScore}</span>
+        {/*
+         * Hesab və Elo fərqi eyni sütunda, biri digərinin altında. Fərq
+         * hesabdan kiçikdir — baxış əvvəl nəticəni, sonra qiymətini görür.
+         */}
+        <div className="w-14 shrink-0 text-center sm:w-24">
+          <div className="font-display text-[15px] font-semibold tabular-nums">
+            <span className="text-gold-400">{winScore}</span>
+            <span className="mx-1.5 text-ink-300">:</span>
+            <span className="text-ink-500">{loseScore}</span>
+          </div>
+          {gain != null && gain > 0 && (
+            <div className="mt-0.5 text-[11px] font-medium tabular-nums text-felt-300/80">
+              +{gain}
+            </div>
+          )}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-2.5">
@@ -563,15 +583,24 @@ function HowItWorks({ copy }: { copy: LandingCopy }) {
         note={copy.rules.note}
       />
 
-      {/* Xətlər boşluqdan doğur: gap-px + fon rəngi */}
+      {/*
+       * Xətlər boşluqdan doğur: gap-px + fon rəngi. Kənar sütunların
+       * xarici boşluğu sıfırlanır ki, mətn bölmənin öz kənar xətti ilə
+       * eyni şaquli xətdən başlasın və bitsin.
+       */}
       <ol className="grid gap-px border-y border-rail bg-rail sm:grid-cols-3">
         {copy.rules.steps.map((step, i) => (
-          <li key={step.title} className="bg-paper px-0 py-6 sm:px-6 sm:first:pl-0">
-            <span className="font-display text-[11px] font-semibold tracking-[0.22em] text-gold-400/75">
+          <li
+            key={step.title}
+            className="bg-paper px-0 py-6 sm:px-7 sm:py-7 sm:first:pl-0 sm:last:pr-0"
+          >
+            <span className="font-display text-[11px] font-semibold tabular-nums tracking-[0.22em] text-gold-400/75">
               0{i + 1}
             </span>
-            <h3 className="mt-3 font-display text-[17px] font-semibold text-ink-950">{step.title}</h3>
-            <p className="mt-2 max-w-xs text-sm leading-relaxed text-ink-500">{step.text}</p>
+            <h3 className="mt-3 font-display text-[17px] font-semibold tracking-[-0.01em] text-ink-950">
+              {step.title}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-500">{step.text}</p>
           </li>
         ))}
       </ol>
@@ -585,7 +614,20 @@ function HowItWorks({ copy }: { copy: LandingCopy }) {
 
 function ClosingCta({ user, copy }: { user: { fullName: string } | null; copy: LandingCopy }) {
   return (
-    <section className="felt-weave relative overflow-hidden rounded-[20px] border border-rail bg-felt-950 px-6 py-11 sm:px-12 sm:py-14">
+    /*
+     * Hero kimi tam enli zolaq. Əvvəl yuvarlaq künclü kart idi — səhifənin
+     * qalanı saç teli xətlərdən qurulduğu üçün tək qalan kart ora
+     * yapışdırılmış ayrı bir element kimi görünürdü. İndi kadr kompozisiyası
+     * başladığı yerdə bağlanır: ekran kənarına dayanan mahud səth, üstündə
+     * və altında nazik xətt.
+     */
+    /*
+     * Alt kənarda öz xətti yoxdur və `-mb-7` ilə `main`-in alt boşluğu
+     * udulur: zolaq birbaşa altbilginin xəttinə dayanır. Əks halda iki
+     * nazik xətt bir-birindən 28 piksel aralı qalır və aralarındakı boş
+     * zolaq səhv kimi oxunur.
+     */
+    <section className="felt-weave full-bleed relative -mb-7 overflow-hidden border-t border-rail bg-felt-950">
       <span aria-hidden className="rule-gold absolute inset-x-0 top-0 h-px" />
 
       {/*
@@ -598,24 +640,24 @@ function ClosingCta({ user, copy }: { user: { fullName: string } | null; copy: L
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(85% 120% at 18% -10%, rgba(215,181,109,0.13) 0%, rgba(215,181,109,0.04) 38%, transparent 70%), radial-gradient(100% 90% at 100% 110%, rgba(0,0,0,0.5) 0%, transparent 62%)',
+            'radial-gradient(70% 130% at 22% -10%, rgba(215,181,109,0.13) 0%, rgba(215,181,109,0.04) 38%, transparent 72%), radial-gradient(70% 110% at 100% 110%, rgba(0,0,0,0.5) 0%, transparent 62%)',
         }}
       />
       <div aria-hidden className="film-grain absolute inset-0 opacity-[0.04] mix-blend-overlay" />
 
-      <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12 sm:py-16 lg:flex-row lg:items-end lg:justify-between lg:gap-16 lg:py-20">
         <div className="min-w-0">
-          <h2 className="max-w-lg font-display text-[28px] font-semibold leading-tight tracking-[-0.025em] text-ink-950 sm:text-[36px]">
+          <h2 className="max-w-lg font-display text-[28px] font-semibold leading-[1.1] tracking-[-0.025em] text-ink-950 sm:text-[36px]">
             {user ? copy.cta.memberTitle : copy.cta.guestTitle}
           </h2>
-          <p className="mt-3.5 max-w-md text-[15px] leading-relaxed text-felt-100/70">
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-felt-100/70">
             {user
               ? copy.cta.memberText
               : copy.cta.guestText}
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-x-7 gap-y-4">
+        <div className="flex shrink-0 flex-wrap items-center gap-x-7 gap-y-4 lg:pb-1">
           {user ? (
             <>
               <Link to="/friends" className={buttonClass('gold', 'lg', 'px-6')}>
@@ -642,28 +684,13 @@ function ClosingCta({ user, copy }: { user: { fullName: string } | null; copy: L
    Ortaq kiçik hissələr
    ═══════════════════════════════════════════════════════════════ */
 
-function relativeTime(iso: string | null, language: Language): string {
-  if (!iso) return '—'
-
-  const date = new Date(iso)
-  const elapsedSeconds = Math.floor((Date.now() - date.getTime()) / 1000)
-  const formatter = new Intl.RelativeTimeFormat(localeByLanguage[language], { numeric: 'auto' })
-
-  if (elapsedSeconds < 60) return formatter.format(-Math.max(0, elapsedSeconds), 'second')
-  const minutes = Math.floor(elapsedSeconds / 60)
-  if (minutes < 60) return formatter.format(-minutes, 'minute')
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return formatter.format(-hours, 'hour')
-  const days = Math.floor(hours / 24)
-  if (days < 30) return formatter.format(-days, 'day')
-
-  return new Intl.DateTimeFormat(localeByLanguage[language], {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
+/*
+ * Bölmə başlığı jurnal masthead-i kimi qurulur: üst xətt, onun altında
+ * solda rubrika və sağda keçid, sonra başlığın öz sətri. Qeyd geniş
+ * ekranda başlığın altında yox, yanındakı sütundadır — beləcə hər bölmə
+ * "etiket + başlıq + altyazı" kimi eyni yığına çevrilmir və səhifənin
+ * sağ yarısı boş qalmır.
+ */
 function SectionHead({
   id,
   label,
@@ -678,21 +705,26 @@ function SectionHead({
   action?: ReactNode
 }) {
   return (
-    <header className="mb-7 border-t border-rail pt-5">
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-gold-400/70">
-            {label}
-          </p>
-          <h2
-            id={id}
-            className="mt-2.5 font-display text-[26px] font-semibold leading-tight tracking-[-0.025em] text-ink-950 sm:text-[32px]"
-          >
-            {title}
-          </h2>
-          {note && <p className="mt-2.5 max-w-xl text-[15px] leading-relaxed text-ink-500">{note}</p>}
-        </div>
+    <header className="mb-8 border-t border-rail pt-4">
+      <div className="flex items-baseline justify-between gap-6">
+        <p className="min-w-0 truncate text-[10px] font-medium uppercase tracking-[0.24em] text-gold-400/70">
+          {label}
+        </p>
         {action}
+      </div>
+
+      <div className="mt-4 grid gap-x-10 gap-y-3 lg:grid-cols-12 lg:items-baseline">
+        <h2
+          id={id}
+          className="font-display text-[26px] font-semibold leading-[1.12] tracking-[-0.025em] text-balance text-ink-950 sm:text-[32px] lg:col-span-7"
+        >
+          {title}
+        </h2>
+        {note && (
+          <p className="max-w-xl text-[15px] leading-relaxed text-ink-500 lg:col-span-5 lg:max-w-none">
+            {note}
+          </p>
+        )}
       </div>
     </header>
   )
@@ -730,9 +762,15 @@ function TextLink({ to, children }: { to: string; children: ReactNode }) {
   )
 }
 
-/** Boş vəziyyət — punktir çərçivə və ikon xanası olmadan */
+/**
+ * Boş vəziyyət — punktir çərçivə və ikon xanası olmadan. Mətn ortalanmır:
+ * səhifənin qalanı sol kənardan qurulub, ortalanmış cümlə həmin xətti pozur
+ * və bölmə "sınıq" görünür.
+ */
 function Quiet({ children }: { children: ReactNode }) {
   return (
-    <p className="border-y border-rail py-12 text-center text-sm text-ink-400">{children}</p>
+    <div className="border-y border-rail py-14">
+      <p className="max-w-sm text-[15px] leading-relaxed text-ink-400">{children}</p>
+    </div>
   )
 }
